@@ -10,7 +10,7 @@ const network = hardhat.network.name;
 // const gasStationURL = (network == 'mainnet') ? MAINNET_GAS_STATION_URL : TESTNET_GAS_STATION_URL;
 const providerURL = (network == 'mainnet') ? MAINNET_API_URL : TESTNET_API_URL;
 const contractAddress = (network == 'mainnet') ? MAINNET_CONTRACT_ADDRESS : TESTNET_CONTRACT_ADDRESS;
-const abi = JSON.parse(fs.readFileSync(`./artifacts/contracts/${CONTRACT_NAME}.sol/${CONTRACT_NAME}.json`)).abi;
+const abi = JSON.parse(fs.readFileSync(`./contracts/abi.json`)).abi;
 const provider = new hardhat.ethers.Wallet(WALLET_PRIVATE_KEY, hardhat.ethers.provider);
 const contract = new hardhat.ethers.Contract(
     contractAddress,
