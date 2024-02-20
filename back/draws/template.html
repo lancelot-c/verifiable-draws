@@ -1,0 +1,551 @@
+<!-- 
+    © 2023 Verifiable Draws
+    https://www.verifiabledraws.com/
+
+    This code is licensed under AGPL v3 license,
+    see https://www.gnu.org/licenses/agpl-3.0.en.html for details.
+-->
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1">
+
+    <title>{{ drawTitle }}</title>
+    <!-- <link rel="icon" href="images/favicon.png" /> -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Equivalent to https://unpkg.com/fireworks-js@2.x/dist/index.umd.js -->
+    <script src="https://bafybeidmyj27yy6zit6tjc7d5rcftdkfzupljpkzzltatfqdlcz5fb56iq.ipfs.dweb.link/index.umd.js"></script>
+    
+    <script type="module">
+
+        // Equivalent to https://cdn.ethers.io/lib/ethers-5.7.esm.min.js
+        import { ethers } from "https://bafybeihbbwwchkazi6gb6weqqehhyj3h2kioohwxqfhkea2cb4z7vfx2p4.ipfs.dweb.link/ethers-5.7.esm.min.js";
+
+        const providerURL = '{{ providerURL }}';
+        const provider = new ethers.providers.JsonRpcProvider(providerURL);
+        
+        const contractAddress = '{{ contractAddress }}';
+        const contract = new ethers.Contract(contractAddress, [
+            'function getRandomnessForDraw(string cid) external view returns (bytes memory)',
+        ], provider);
+
+        const url = window.location.href;
+        console.log(`url = ${url}`);
+
+        const stringCID = url.slice(8).split('.')[0]
+        console.log(`stringCID = ${stringCID}`);
+
+        const stringCidElmts = document.getElementsByClassName('stringCID');
+        for (let i = 0; i < stringCidElmts.length; i++) {
+            stringCidElmts[i].innerHTML = stringCID;
+        }
+
+        const drawParticipants = [{{ drawParticipants }}];
+        document.getElementsByClassName("participants__list")[0].innerHTML = drawParticipants.map(p => `<li>${p}</li>`).join('');
+
+        const fireworksElmt = document.querySelector('.fireworks');
+        const fireworks = new Fireworks.default(fireworksElmt);
+
+        // Handling time
+        const scheduledAt = new Date({{ drawScheduledAt }} * 1000);
+        const scheduledAtString = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(scheduledAt);
+        const scheduledAtElmt = document.getElementsByClassName("draw-scheduled-at")[0];
+        scheduledAtElmt.innerHTML = `Tirage au sort réalisé le ${scheduledAtString}`;
+        const loadingElmt = document.getElementsByClassName("draw-ongoing")[0];
+        const isDrawOngoing = scheduledAt.getTime() <= Date.now();
+
+        if (isDrawOngoing) {
+            scheduledAtElmt.style.display = 'none';
+            loadingElmt.style.display = 'block';
+            periodicallyCheckDrawResult();
+        }
+
+        // Modal
+        let modal;
+        document.addEventListener("click", (e) => {
+            if (e.target.className === "verifiable-code-modal-open" || e.target.className === "verifiable-outcome-modal-open") {
+                modal = document.getElementById(e.target.dataset.id);
+                openModal(modal);
+            } else if (e.target.className === "modal-close" || e.target.id !== "") {
+                closeModal(modal);
+            } else {
+                return;
+            }
+        });
+
+        const openModal = (modal) => {
+            document.body.style.overflow = "hidden";
+            modal.setAttribute("open", "true");
+            document.addEventListener("keydown", escClose);
+            let overlay = document.createElement("div");
+            overlay.id = "modal-overlay";
+            document.body.appendChild(overlay);
+        };
+
+        const closeModal = (modal) => {
+            document.body.style.overflow = "auto";
+            modal.removeAttribute("open");
+            document.removeEventListener("keydown", escClose);
+            document.body.removeChild(document.getElementById("modal-overlay"));
+        };
+
+        const escClose = (e) => {
+            if (e.keyCode == 27) {
+                closeModal(modal);
+            }
+        };
+
+
+        // Check now & every minute
+        async function periodicallyCheckDrawResult() {
+            const [done, entropy] = await checkDrawResult();
+
+            if (done) {
+
+                pickWinners(entropy);
+
+            } else {
+                setTimeout(() => {
+                    periodicallyCheckDrawResult();
+                }, 1000 * 60);
+            }
+        }
+
+        async function checkDrawResult() {
+
+            let entropy = await contract.getRandomnessForDraw(stringCID);
+            console.log(`entropy = ${entropy}`);
+            return [entropy != '0x', entropy];
+        }
+
+        async function pickWinners(entropy) {
+            console.log(`We have some winners !`);
+            loadingElmt.style.display = 'none';
+            scheduledAtElmt.style.display = 'block';
+
+            // Launch fireworks animation
+            launchFireworks(10, 200);
+
+            const winnersElement = document.getElementsByClassName("winners")[0];
+            const winnersListElement = winnersElement.getElementsByClassName("winners__list")[0];
+
+            winnersElement.style.display = 'block';
+
+            const decimalEntropy = BigInt(entropy); // parseInt(entropy.slice(2), 16);
+            console.log(`decimalEntropy = ${decimalEntropy}`);
+            const drawNbParticipants = {{ drawNbParticipants }};
+            const nbDigitsPerWinner = getNbDigits(drawNbParticipants);
+            console.log(`nbDigitsPerWinner = ${nbDigitsPerWinner}`);
+            const winnerIndexes = splitIn(decimalEntropy, nbDigitsPerWinner);
+            console.log(`winnerIndexes = ${winnerIndexes}`);
+            const winnersNeeded = {{ drawNbWinners }};
+            const pickedIndexes = [];
+
+
+            for (let i = 0; i < winnerIndexes.length; i++) {
+                if (i === winnersNeeded) {
+                    break;
+                }
+
+                const winnerIndex = winnerIndexes[i] % drawParticipants.length;
+                const winner = drawParticipants.splice(winnerIndex, 1)[0];
+                winnersListElement.innerHTML += `<li>${winner}</li>`;
+            }
+        }
+
+        function getNbDigits(number) {
+            return number.toString().length;
+        }
+
+        // Split {number} in an array of {nbDigits} digit numbers
+        function splitIn(number, nbDigits) {
+
+            let output = [],
+            sNumber = number.toString();
+
+            for (let i = 0, len = sNumber.length; i < len; i += nbDigits) {
+                output.push(+sNumber.substring(i, i + nbDigits));
+            }
+
+            return output;
+        }
+
+        function launchFireworks(nb, delay, first = true) {
+            if (first && nb > 0) {
+                fireworksElmt.style.display = 'block';
+                fireworks.launch(1);
+                nb--;
+            }
+
+            if (nb > 0) {
+
+                setTimeout(() => {
+                    fireworks.launch(1);
+                    nb--;
+                    launchFireworks(nb, delay, false);
+                }, delay);
+
+            }
+            
+            if (nb == 0) {
+                setTimeout(() => {
+                    fireworksElmt.style.display = 'none';
+                }, 2000);
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0px;
+            width: 100%;
+            font-size: 1.1em;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            color: #338a39;
+            background: #d2ecd2;
+            padding: 16px 64px;
+            border-bottom: 1px solid #338a39;
+            width: 100%;
+            position: fixed;
+            top: 0px;
+        }
+
+        .main {
+            padding: 16px 64px;
+            width: 100%;
+            margin-top: 105px;
+        }
+
+        header a {
+            color: inherit;
+        }
+
+        .certified-section__img {
+            height: 32px;
+            margin-right: 32px;
+        }
+
+        .certified-section__txt {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: end;
+        }
+
+        ul {
+            list-style: decimal-leading-zero;
+        }
+
+        li {
+            padding-left: 8px;
+            margin: 8px 0px;
+        }
+
+        .first-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .powered-by {
+            font-size: .7em;
+            text-align: end;
+            min-width: 300px;
+            margin-left: 32px;
+        }
+
+        .draw-parameter {
+            margin: 48px 0px;
+        }
+
+        .winners {
+            display: none;
+        }
+
+        .winners h2 {
+            background-image: linear-gradient(to left, violet, indigo, blue, green, yellow, orange, red);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            width: 265px;
+        }
+
+        .winners ul {
+            color: #338a39;
+        }
+
+        .draw-parameter h2 {
+            text-transform: uppercase;
+        }
+
+        .draw-parameter__value {
+            font-size: 1.1em;
+            line-height: 1.8em;
+        }
+
+        .draw-parameter__value a {
+            color: #0000EE;
+        }
+
+        code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            white-space: break-spaces;
+            background-color: rgba(175, 184, 193, 0.2);
+            border-radius: 6px;
+        }
+
+        .fireworks {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
+        .lds-dual-ring {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            margin-right: 24px;
+        }
+
+        .lds-dual-ring:after {
+            content: " ";
+            display: block;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid #000000;
+            border-color: #000000 transparent #000000 transparent;
+            animation: lds-dual-ring 1.2s linear infinite;
+        }
+
+        @keyframes lds-dual-ring {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .draw-ongoing {
+            display: none;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            top: 0px;
+        }
+        .modal[open] {
+            display: flex;
+        }
+        .model-inner {
+            background-color: white;
+            max-width: 60%;
+            padding: 2em;
+            margin: auto;
+            font-size: 1.1em;
+            line-height: 1.6em;
+            overflow: scroll;
+            height: 100%;
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid black;
+        }
+        #modal-overlay {
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            background-color: black;
+            opacity: 0.5;  
+        }
+        .modal-close {
+            color: #aaaaaa;
+            float: right;
+            font-size: 2.2em;
+            font-weight: 100;
+        }
+        .modal-close:hover,
+        .modal-close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+
+        <div>
+            <img alt="" class="certified-section__img"
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAACXBIWXMAAAsTAAALEwEAmpwYAAADPklEQVR4nO3cvW7UQBSG4YgSGgQdUHAhwNr5WxsicTXUW/AjRIlECQVlYieIghKJCwBECwVcA6QHk8UJAe/GO/bMOTPnfST33nk/W1usdm0NAAAAAAAAAAAAauTV9N7mq80r0vcBAVldPMrr8mdeF5/Xd+9clb4fBHQSv70YgRn/x2cEZiyOzwiSd3Z8RpCs/vEZQXJWj88IkuEenxFEb3j8kxFM6uKa9OfBCsaLf3x9YQSR8BB/flXl18nB9Lr058MS3uIzAv28x2cEegWLzwj0yaviYdD4jEAPsfh/rubN840RCJGOzwgEaYnPCARkdflEOnj3VVTSZ5M8bU/+8VUVHzf2Ny5Ln0/SiG8Y8Q0jvmHEN4z4hhHfMOIbRnzDiG8Y8Q0jvmHEN6w56AfioYkvg/iGEd8w4htGfMOIbxjxDSO+o2yv2Mir8tlsNjsnfS+umvt/LB6648qq8v327vYl6fNZKK9u38rq8nB+s8WLGEfAk+/od/zmRn+cXmxcIyC+o674sY2A+I7W96Y3F8WPZQTEd9QnvvYREN/RKvG1joD4jlziaxsB8R0Nia9lBMR3NEZ86REQ39GY8aVGQHxHPuKHHkFWF/fFQ8cYf7Jf3PAVP9QIiO8oRHzfIyC+o5DxfY2A+I4k4o89AuI7kow/1giI70hD/KEjIL6jo/hV8V38oAaMgPgDNIf9RvygukZQl8/7jCD4v273HrHyn3G1dl7vnG8O8a30gXUf4vI3AU/+SGIcAfFHFtMIiO9JDCMgvmdbL7cuNIf8TvxAu0ZQl5+k76F7nJF84etL85tA3ZXKk/8vRmA4fosRGI7fYgSG47cYgeH4LUZgOH7L9Aisx2+ZHAHxTzM1AuJ3MzEC4i+X9AiI30+SIyD+apIaAfHdJDEC4g8T9QiIP44oR0D8cUU1AuL7EcUIiO+X6hEQPwyVIyB+WKpGQHwZKkZAfFmiIyC+DiIjIL4uQUdAfJ2CjID4unkdAfHj4GUExI/LqCMgfpxGGQHx4zZoBMRPg9MIiJ+WVf6kIrk/Z8BczzfBB578hJ0xAuJb0DUCXvvG/D0C4ht19MWwKp9ODu5elL4XAAAAAAAAAACAWPwCzoJCzBdMJesAAAAASUVORK5CYII=" />
+
+        </div>
+        <div class="certified-section__txt">
+            <p>
+                Le présent tirage au sort est réalisé par un algorithme dont le <a href="#" class="verifiable-code-modal-open" data-id="verifiable-code-modal">code</a> ainsi que le <a href="#" class="verifiable-outcome-modal-open" data-id="verifiable-outcome-modal">résultat</a> sont vérifiables par tous les participants, 
+                ce qui garantit que le tirage est équitable et aléatoire.
+            </p>
+            <p class="powered-by">
+                Sécurisé par <a href="https://www.verifiabledraws.com/" target="_blank">Verifiable Draws</a>
+            </p>
+        </div>
+
+    </header>
+    <div class="main">
+        <div class="first-line">
+            <h1>{{ drawTitle }}</h1>
+            <h3 class="draw-scheduled-at"></h3>
+            <div class="draw-ongoing">
+                <div class="first-line">
+                    <div class="lds-dual-ring"></div>
+                    <h3>Le tirage au sort est en cours, veuillez patienter...</h3>
+                </div>
+            </div>
+        </div>
+        <hr />
+
+        <div class="draw-parameter winners">
+            <h2>Résultat du tirage:</h2>
+            <ul class="draw-parameter__value winners__list">
+            </ul>
+            <hr />
+        </div>
+
+        <div class="draw-parameter">
+            <h2>Règlement:</h2>
+            <p class="draw-parameter__value">
+                {{ drawRules }}
+            </p>
+        </div>
+
+        <div class="draw-parameter">
+            <h2>{{ drawNbParticipants }} Participants:</h2>
+            <ul class="draw-parameter__value participants__list">
+            </ul>
+        </div>
+
+
+    </div>
+    <footer></footer>
+
+    <!-- Fireworks animation -->
+    <div class="fireworks"></div>
+
+
+    <!-- Verifiable code modal -->
+    <div id="verifiable-code-modal" class="modal" role="dialog" tabindex="-1">
+        <div class="model-inner">
+            <div class="modal-header">
+                <h2>Vérifier le code du tirage</h2>
+                <span class="modal-close" data-id="verifiable-code-modal" aria-label="Close">
+                    &times;
+                </span>
+            </div>
+            <p>
+                Les tirages au sort de Verifiable Draws sont réalisés à l'aide de 2 programmes qui communiquent entre eux.
+                L'un tourne sur Ethereum, l'autre sur IPFS.
+                <br /><br />
+
+
+                <h2>Ethereum</h2>
+                <hr />
+                Le premier est un programme qui répertorie les différents tirages et leur associe automatiquement un nombre aléatoire à la date et à l'heure où le tirage doit être déclenché.
+                Ce programme tourne sur <a href="https://ethereum.org/fr/" target="_blank">Ethereum</a>, qui est une technologie qui permet d'executer des programmes dont le code est public, vérifiable et auditable par tous à tout moment.
+                <br /><br />
+                Il s'agit d'une garantie plus forte qu'un programme open-source puisqu'un programme open-source apporte simplement l'information qu'un code source a été rendu public, mais il ne garantit pas que ce code source est effectivement le code utilisé par le programme en question.
+                <br /><br />
+                Un programme seulement open-source n'est donc pas fiable pour réaliser un tirage au sort puisque son code peut être modifié et truqué sans que personne ne puisse s'en rendre compte.
+                <br /><br />
+                Dans le cadre de ce tirage au sort, le code du programme utilisé sur Ethereum est disponible <a href="https://sepolia.etherscan.io/address/{{ contractAddress }}#code#F1#L1" target="_blank">ici</a>.
+                La mention <code>Contract Source Code Verified (Exact Match)</code> apporte la certitude que le code exécuté en intéragissant avec ce programme correspond réellement au code publié.
+                <br /><br />
+                Les nombres aléatoires que nous utilisons sont fournis par notre partenaire <a href="https://chain.link/vrf" target="_blank">ChainLink</a> 
+                qui possède aujourd'hui la méthode de génération de nombres aléatoires sur Ethereum la plus robuste du marché.
+                <br /><br />
+                Les nombres fournis par ChainLink sont générés par des fonctions mathématiques dites “Verifiable Random Functions” dont le résultat peut être mathématiquement prouvé comme étant aléatoire.
+                <br /><br />
+                Une explication détaillée est disponible <a href="https://chain.link/education-hub/verifiable-random-function-vrf" target="_blank">sur leur site</a>.
+                <br /><br /><br />
+
+
+                <h2>IPFS</h2>
+                <hr />
+                Le deuxième programme est cette page web que vous visionnez actuellement.
+                <br /><br />
+                Cette page contient un code qui demande au programme Ethereum le nombre aléatoire généré pour ce tirage.
+                <br /><br />
+                Le nombre aléatoire est ensuite converti en une liste de participants qui constitue la liste des gagnants du tirage. Cette liste contient autant de participants que le nombre de gagnants décidés dans les règles du tirage définies sur cette page.
+                <br /><br />
+                Pour éviter que quiconque ne modifie ces règles, nous utilisons la technologie <a href="https://ipfs.tech/" target="_blank">IPFS</a> qui fournit des pages infalsifiables dont l'URL commence toujours par <code>ipfs://</code> et dont le code source ne peut pas être modifié.
+                <br /><br />
+                En effet, l'URL de ce tirage est <code>https://www.verify.win/ipfs/<span class="stringCID"></span></code> mais cette page pointe en fait vers l'URL <code>ipfs://<span class="stringCID"></span></code> dont le contenu est infalsifiable.
+                <br /><br />
+                Vous pouvez utiliser un navigateur compatible avec IPFS tel que <a href="https://brave.com/fr/" target="_blank">Brave</a> pour accéder à ces 2 adresses et vérifier que leur contenu est effectivement identique, ce qui garantit que les données du tirage ne peuvent pas être modifiées une fois le tirage créé.
+                <br /><br />
+                Une explication détaillée du fonctionnement d'IPFS est disponible <a href="https://ipfs.tech/#how" target="_blank">sur leur site</a>.
+            </p>
+        </div>
+    </div>
+
+
+    <!-- Verifiable outcome modal -->
+    <div id="verifiable-outcome-modal" class="modal" role="dialog" tabindex="-1">
+        <div class="model-inner">
+            <div class="modal-header">
+                <h2>Vérifier le résultat du tirage</h2>
+                <span class="modal-close" data-id="verifiable-outcome-modal" aria-label="Close">
+                    &times;
+                </span>
+            </div>
+            <p>
+
+
+                Cette page contient tous les paramètres nécessaires au bon déroulement du tirage :
+                le nom du tirage, le règlement, la date et l'heure de déclenchement, la liste des participants, le nombre de participants à tirer au sort, ainsi que la manière dont les nombres aléatoires sont utilisés pour déterminer les participants à sélectionner.
+                <br /><br />
+                Pour éviter que quiconque ne modifie ces données, nous utilisons la technologie <a href="https://ipfs.tech/" target="_blank">IPFS</a> qui fournit des URLs pointant vers des pages dont le code source ne peut pas être modifié.
+                <br /><br />
+                Dans le cadre de ce tirage, l'URL du tirage est <code>https://www.verify.win/ipfs/<span class="stringCID"></span></code> qui pointe en fait vers l'URL <code>ipfs://<span class="stringCID"></span></code> dont le contenu est infalsifiable.
+                <br /><br />
+                Vous pouvez utiliser un navigateur compatible avec IPFS tel que <a href="https://brave.com/fr/" target="_blank">Brave</a> pour accéder à ces 2 adresses et vérifier que leur contenu est identique, ce qui prouve que les données du tirage n'ont pas été altérées depuis la création du tirage.
+                <br /><br />
+                Une explication détaillée du fonctionnement d'IPFS est disponible <a href="https://ipfs.tech/#how" target="_blank">sur leur site</a>.
+            </p>
+        </div>
+    </div>
+
+
+</body>
+
+</html>
