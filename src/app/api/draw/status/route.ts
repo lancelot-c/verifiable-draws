@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { Web3Storage } from 'web3.storage';
 
 
 export async function GET(request: Request) {
@@ -17,10 +16,8 @@ export async function GET(request: Request) {
 
     console.log(`api/draw/status called with cid = ${cid}`);
   
-    const client = new Web3Storage({ token })
-    const info = await client.status(cid);
 
-    return NextResponse.json(info, {
+    return NextResponse.json(true, {
         status: 200,
         headers: {
             'Access-Control-Allow-Origin': '*', // Allow all IPFS gateways to query this endpoint
