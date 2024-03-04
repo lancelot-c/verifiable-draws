@@ -341,7 +341,6 @@ async function calculateCidFromFile(filepath: string) {
     return cidPromise;
 }
 
-
 async function calculateCidFromString(str: string) {
 
 	const textEncoder = new TextEncoder()
