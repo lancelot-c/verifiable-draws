@@ -349,7 +349,6 @@ async function calculateCidFromString(str: string) {
     return await calculateCidFromBytes(uint8Array);
 }
 
-
 async function pinInKV(cid: string, content: string) {
     await kv.set(`content_${cid}`, content);
 }
