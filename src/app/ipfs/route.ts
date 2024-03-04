@@ -1,15 +1,11 @@
-import fsPromises from 'fs/promises';
-import path from 'path'
 import { kv } from "@vercel/kv";
  
 export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const cid = searchParams.get('cid')
-    console.log(`cid = ${cid}`);
+    console.log(`Access draw ${cid}`);
 
-    // const filepath = path.join(process.cwd(), `/src/app/ipfs/${cid}.html`);
-    // const fileData = await fsPromises.readFile(filepath, "utf-8");
     const fileData: string | null = await kv.get(`content_${cid}`);
 
     const dataHeaders = {

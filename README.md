@@ -1,8 +1,5 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-[![Verifiable Draws on Discord](https://img.shields.io/discord/1115626673275154453?label=Discord)](https://discord.gg/H7u3dXs4)
-
-
 ## Getting Started
 
 First, run the development server:
