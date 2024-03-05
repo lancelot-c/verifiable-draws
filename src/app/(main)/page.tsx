@@ -28,13 +28,13 @@ import bbcLogoImg from '/public/img/bbc-logo.webp'
 import {
     ScaleIcon,
     CheckIcon,
-    RocketLaunchIcon,
     ShieldCheckIcon,
     ShieldExclamationIcon,
     SparklesIcon,
     CursorArrowRaysIcon,
     UserGroupIcon,
-    ArrowTopRightOnSquareIcon
+    ArrowTopRightOnSquareIcon,
+    GlobeEuropeAfricaIcon
 } from '@heroicons/react/24/solid'
 
 
@@ -70,10 +70,10 @@ const features = [
         icon: UserGroupIcon,
     },
     {
-        name: 'Cutting-edge technologies',
+        name: 'GDPR compliant',
         description:
-            'Stay at the forefront of innovation by using the most advanced random draw algorithm currently on the market.',
-        icon: RocketLaunchIcon,
+            'No personal data is stored onchain as the list of participants is only held by us on our private IPFS gateway.',
+        icon: GlobeEuropeAfricaIcon,
     },
 ]
 
@@ -129,19 +129,19 @@ const featuresCool = [
     {
         name: 'Provably fair results.',
         description:
-            'The participants have an actual proof which certifies that the draw was performed in a fair and random way. They can check the results themselves using our provided link without communicating with the draw organizer.',
+            'The draw organizer shares the URL of the draw with the participants who can then check the results by themselves without having to trust anyone. Because the draw is end-to-end verifiable, they have a proof that the winners were selected in a fair and random way.',
         icon: ShieldCheckIcon,
     },
     {
-        name: 'Tamper-proof website.',
+        name: 'Decentralized frontend.',
         description:
-            'All draws are stored on our website verify.win using IPFS, the leading decentralized storage solution, which means that not only the code is open-source, but it\'s also verifiable and impossible for anyone to change it, even for us.',
+            'The draw details are gathered in a single html file that is stored on IPFS and is accessible at verify.win/<IPFS-CID>. When the draw occurs, the webpage automatically retrieve the winners from the smart contract and display them to the user.',
         icon: ShieldCheckIcon,
     },
     {
-        name: 'On-chain verifiable randomness.',
+        name: 'Onchain verifiable randomness.',
         description:
-            'The randomness is generated in our smart contract using Chainlink VRF which provides cryptographically secure randomness for your draw.',
+            'The winners are randomly picked in our smart contract using Chainlink VRF which provides cryptographically secure randomness for your draw. No personal data is leaked during this process as the participants are anonymized onchain.',
         icon: ShieldCheckIcon,
     },
 ]
@@ -241,9 +241,11 @@ const tiers = [
         features: [
             // { included: true, text: 'Provably-fair and verifiable randomness' },
             // { included: true, text: 'Is secure enough to protect a billion dollar lottery against any kind of attack' },
-            { included: true, text: 'Up to 100 000 participants' },
-            { included: true, text: 'Up to 4 winners' },
-            { included: true, text: 'Secured by Arbitrum testnet' },
+            { included: true, text: 'Up to 50 draws per month' },
+            { included: true, text: 'Up to 100 000 participants per draw' },
+            { included: true, text: 'Up to 4 winners per draw' },
+            { included: true, text: 'Deployed on Arbitrum Sepolia testnet' },
+            { included: true, text: 'Accessible on our private IPFS gateway verify.win' },
         ],
         featured: false,
         cta: 'Launch draw',
@@ -272,12 +274,14 @@ const tiers = [
         price: 'Custom',
         description: 'We provide custom plans for companies engaged in large-scale operations.',
         features: [
+            { included: true, text: 'Unlimited draws' },
             { included: true, text: 'Unlimited participants' },
             { included: true, text: 'Unlimited winners' },
-            { included: true, text: 'Secured by Arbitrum mainnet' },
+            { included: true, text: 'Deployed on Arbitrum One mainnet' },
+            { included: true, text: 'Accessible on our private IPFS gateway verify.win' },
+            { included: true, text: 'Accessible on all major public IPFS gateways' },
             { included: true, text: 'White-labelling, bring your own template' },
             { included: true, text: 'API access' },
-            { included: true, text: 'Private draws' },
             { included: true, text: '24/7 priority support' },
         ],
         featured: true,
@@ -317,10 +321,10 @@ export default function Example() {
                     <div className="mx-auto max-w-7xl px-6 lg:px-8">
                         <div className="mx-auto max-w-3xl text-center">
                             <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                                The ultimate<br />randomness provider
+                                Random draws<br />verifiable onchain
                             </h1>
                             <p className="mt-6 text-lg leading-8 text-gray-600">
-                                <span className="italic">Verifiable Draws</span> provides your applications with a verifiable source of randomness on the blockchain, unlocking the maximum level of security and transparency for you and your end users.
+                                <span className="italic">Verifiable Draws</span> provides your offchain applications with onchain verifiable randomness, unlocking the maximum level of security and transparency for your users.
                             </p>
                             <div className="mt-10 flex items-center justify-center gap-x-6">
                                 <Link
@@ -924,7 +928,7 @@ export default function Example() {
                                     </svg>
                                 </span>
                                 <span data-subtitle="true" style={{ boxSizing: 'border-box', fontSize: '14px', lineHeight: '21px', letterSpacing: '-0.14px', color: 'rgb(102, 102, 102)', margin: '0px', maxWidth: '440.918px', outlineColor: 'rgb(37, 99, 235)', borderWidth: '0px', borderStyle: 'solid', borderColor: 'rgb(234, 234, 234)' }}>
-                                    Ethereum is a decentralized blockchain platform that establishes a peer-to-peer network that securely executes and verifies application code, called smart contracts.
+                                    Ethereum smart contracts are computer programs stored on the blockchain that are guaranteed to execute according to the rules defined by its code, which cannot be changed once created.
                                 </span>
                             </div>
                         </Link>

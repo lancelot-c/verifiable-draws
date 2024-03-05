@@ -15,8 +15,8 @@ import {
 } from '@heroicons/react/24/solid'
 
 export const metadata = {
-    title: 'The ultimate randomness provider',
-    description: 'Verifiable Draws provides your applications with a verifiable source of randomness on the blockchain, unlocking the maximum level of security and transparency for you and your end users.',
+    title: 'Random draws verifiable onchain',
+    description: 'Verifiable Draws provides your offchain applications with onchain verifiable randomness, unlocking the maximum level of security and transparency for your users.',
 }
 
 const navigation: any[] = [
