@@ -321,7 +321,7 @@ export default function Example() {
                     <div className="mx-auto max-w-7xl px-6 lg:px-8">
                         <div className="mx-auto max-w-3xl text-center">
                             <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                                Random draws<br />verifiable onchain
+                                The ultimate<br />randomness provider
                             </h1>
                             <p className="mt-6 text-lg leading-8 text-gray-600">
                                 <span className="italic">Verifiable Draws</span> provides your offchain applications with onchain verifiable randomness, unlocking the maximum level of security and transparency for your users.
