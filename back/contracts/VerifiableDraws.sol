@@ -466,10 +466,14 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         return bytes8(bytes.concat(data[from + 0], data[from + 1], data[from + 2], data[from + 3], data[from + 4], data[from + 5], data[from + 6], data[from + 7]));
     }
 
-    function nbValuesBetween(uint32[] memory arr, uint32 min, uint32 max, uint32 imax) internal pure returns (uint32) {
+    // Return the number of values in arr that are between min and max (both included)
+    // In Solidity, some arrays must be initialized with a fixed size, then the array is progressively filled with real values during execution
+    // When it is the case, you can't loop efficiently through the array with arr.length because it will return the total size of the array, not the size of the filled values
+    // That's why we have a length parameter that we use instead of using arr.length, length is the size of the array that is currently in use
+    function nbValuesBetween(uint32[] memory arr, uint32 min, uint32 max, uint32 length) internal pure returns (uint32) {
         uint32 count = 0;
 
-        for (uint32 i = 0; i < imax; i++) {
+        for (uint32 i = 0; i < length; i++) {
             if (arr[i] >= min && arr[i] <= max) {
                 count++;
             }
