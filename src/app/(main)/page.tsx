@@ -248,7 +248,7 @@ const tiers = [
             { included: true, text: 'Support on our Discord' },
         ],
         mostPopular: true,
-        cta: 'Launch draw',
+        cta: 'Coming soon',
     },
     {
         name: 'Enterprise',
