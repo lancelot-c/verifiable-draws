@@ -696,8 +696,8 @@ export default function Page() {
                                     (drawLinks.length > 0 && !deployError) && (
                                     <div className="text-center">
                                         <p className="mt-8 text-md">
-                                            Your draw has successfully been deployed to the blockchain. 🎉<br />
-                                            You can now share the following link to the participants so that they can access the draw details and see the winners when they are announced.
+                                            Your draw has successfully been deployed on IPFS & Ethereum. 🎉<br />
+                                            You can now share the following IPFS link with the participants so that they can access the draw results in trustless way.
                                         </p>
 
 
