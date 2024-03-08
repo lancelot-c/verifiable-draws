@@ -414,7 +414,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
             winnerIndexes[i] = nextWinningIndex;
         }
 
-        // We want to display line numbers, not indexes, so all indexes need to be +1
+        // We want to display line numbers, not array indexes, so all indexes need to be +1
         for (uint32 i = 0; i < nbWinners; i++) {
             winnerIndexes[i] += 1;
         }

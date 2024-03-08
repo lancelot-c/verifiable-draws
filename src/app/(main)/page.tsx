@@ -218,55 +218,38 @@ const videos = [
 ]
 
 const tiers = [
-    // {
-    //     name: 'Hobby',
-    //     id: 'tier-hobby',
-    //     href: '/launch-draw',
-    //     price: '0',
-    //     description: 'Try our software for free on a test blockchain',
-    //     features: [
-    //         { included: false, text: 'Non secure randomness, for testing purposes only'},
-    //         { included: true, text: 'Up to 10 participants'},
-    //         { included: true, text: '1 winner only'},
-    //         { included: true, text: 'Schedule draw at custom date and time'},
-    //         { included: true, text: '48-hour support response time'},
-    //     ],
-    // },
     {
-        name: 'Personal',
-        id: 'tier-basic',
+        name: 'Hobby',
+        id: 'tier-hobby',
         href: '/launch-draw',
         price: '$0',
-        description: 'Try the most advanced random draw algorithm currently on the market for free.',
+        description: 'Try the most secure random draw algorithm currently on the market for free.',
         features: [
-            // { included: true, text: 'Provably-fair and verifiable randomness' },
-            // { included: true, text: 'Is secure enough to protect a billion dollar lottery against any kind of attack' },
-            { included: true, text: 'Up to 50 draws per month' },
-            { included: true, text: 'Up to 100 000 participants per draw' },
-            { included: true, text: 'Up to 4 winners per draw' },
+            { included: true, text: 'Up to 10,000 participants' },
+            { included: true, text: 'Up to 4 winners' },
             { included: true, text: 'Deployed on Arbitrum Sepolia testnet' },
-            { included: true, text: 'Accessible on our private IPFS gateway verify.win' },
+            { included: true, text: 'Accessible on our IPFS gateway verify.win' },
         ],
-        featured: false,
+        mostPopular: false,
         cta: 'Launch draw',
     },
-    // {
-    //     name: 'Pro',
-    //     id: 'tier-pro',
-    //     href: '/launch-draw',
-    //     price: '9€',
-    //     description: 'Same as Basic but with 100x more participants to reach a larger audience.',
-    //     features: [
-    //         { included: true, text: 'Provably-fair and verifiable randomness' },
-    //         // { included: true, text: 'Is secure enough to protect a billion dollar lottery against any kind of attack' },
-    //         { included: true, text: 'Up to 100 000 participants' },
-    //         { included: true, text: 'Up to 100 winners' },
-    //         { included: true, text: 'Schedule draw at custom date and time' },
-    //         { included: true, text: '24-hour support response time' },
-    //     ],
-    //     featured: false,
-    //     cta: 'Launch draw',
-    // },
+    {
+        name: 'Startup',
+        id: 'tier-pro',
+        href: '/launch-draw',
+        price: '$9',
+        description: 'Deploy on the open web: trustless, censorship resistant, and free of centralized gatekeepers.',
+        features: [
+            { included: true, text: 'Up to 1,000,000 participants' },
+            { included: true, text: 'Up to 1,000 winners' },
+            { included: true, text: 'Deployed on Arbitrum One mainnet' },
+            { included: true, text: 'Accessible on our IPFS gateway verify.win' },
+            { included: true, text: 'Accessible on all public IPFS gateways' },
+            { included: true, text: 'Support on our Discord' },
+        ],
+        mostPopular: true,
+        cta: 'Launch draw',
+    },
     {
         name: 'Enterprise',
         id: 'tier-enterprise',
@@ -274,18 +257,18 @@ const tiers = [
         price: 'Custom',
         description: 'We provide custom plans for companies engaged in large-scale operations.',
         features: [
-            { included: true, text: 'Unlimited draws' },
+            // { included: true, text: 'Unlimited draws' },
             { included: true, text: 'Unlimited participants' },
             { included: true, text: 'Unlimited winners' },
             { included: true, text: 'Deployed on Arbitrum One mainnet' },
-            { included: true, text: 'Accessible on our private IPFS gateway verify.win' },
-            { included: true, text: 'Accessible on all major public IPFS gateways' },
+            { included: true, text: 'Accessible on our IPFS gateway verify.win' },
+            { included: true, text: 'Accessible on all public IPFS gateways' },
             { included: true, text: 'White-labelling, bring your own template' },
             { included: true, text: 'API access' },
             { included: true, text: '24/7 priority support' },
         ],
-        featured: true,
-        cta: 'Get started today',
+        mostPopular: false,
+        cta: 'Contact sales',
     }
 ]
 
@@ -973,82 +956,75 @@ export default function Example() {
             </p> */}
 
 
-                    {/* <div className="isolate mx-auto mt-10 grid max-w-md grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
-                        {tiers.map((tier) => (
-                            <div
-                                key={tier.id}
-                                className={classNames(
-                                    tier.featured ? 'bg-gray-900 ring-gray-900' : 'bg-white ring-gray-200',
-                                    'rounded-3xl p-8 ring-1 xl:p-10'
-                                )}
-                            >
-                                <h3
-                                    id={tier.id}
-                                    className={classNames(
-                                        tier.featured ? 'text-white' : 'text-gray-900',
-                                        'text-lg font-semibold leading-8'
-                                    )}
-                                >
-                                    {tier.name}
-                                </h3>
-                                <p className={classNames(tier.featured ? 'text-gray-300' : 'text-gray-600', 'mt-4 text-sm leading-6')}>
-                                    {tier.description}
-                                </p>
-                                <p className="mt-6 flex items-baseline gap-x-1">
-                                    <span
-                                        className={classNames(
-                                            tier.featured ? 'text-white' : 'text-gray-900',
-                                            'text-4xl font-bold tracking-tight'
-                                        )}
-                                    >
-                                        {tier.price}
-                                    </span>
-                                    {tier.id !== 'tier-enterprise' ? (
-                                        <span
-                                            className={classNames(
-                                                tier.featured ? 'text-gray-300' : 'text-gray-600',
-                                                'text-sm font-semibold leading-6'
-                                            )}
-                                        >
-                                            /draw
-                                        </span>
-                                    ) : null}
-                                </p>
-                                <Link
-                                    href={tier.href}
-                                    aria-describedby={tier.id}
-                                    className={classNames(
-                                        tier.featured
-                                            ? 'bg-white/10 text-white hover:bg-white/20 focus-visible:outline-white'
-                                            : 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-indigo-600',
-                                        'mt-6 block rounded-md py-2 px-3 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
-                                    )}
-                                >
-                                    {tier.cta}
-                                </Link>
-                                <ul
-                                    role="list"
-                                    className={classNames(
-                                        tier.featured ? 'text-gray-300' : 'text-gray-600',
-                                        'mt-8 space-y-3 text-sm leading-6 xl:mt-10'
-                                    )}
-                                >
-                                    {tier.features.map((feature) => (
-                                        <li key={feature.text} className="flex gap-x-3">
-                                            <CheckIcon
-                                                className={classNames(tier.featured ? 'text-white' : 'text-indigo-600', 'h-6 w-5 flex-none')}
-                                                aria-hidden="true"
-                                            />
-                                            {feature.text}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div> */}
+<div className="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+          {tiers.map((tier, tierIdx) => (
+            <div
+              key={tier.id}
+              className={classNames(
+                tier.mostPopular ? 'lg:z-10 lg:rounded-b-none ring-2 ring-indigo-600' : 'lg:mt-8 ring-1 ring-gray-200',
+                tierIdx === 0 ? 'lg:rounded-r-none' : '',
+                tierIdx === tiers.length - 1 ? 'lg:rounded-l-none' : '',
+                'flex flex-col justify-between rounded-3xl bg-white p-8 xl:p-10'
+              )}
+            >
+              <div>
+                <div className="flex items-center justify-between gap-x-4">
+                  <h3
+                    id={tier.id}
+                    className={classNames(
+                      tier.mostPopular ? 'text-indigo-600' : 'text-gray-900',
+                      'text-lg font-semibold leading-8'
+                    )}
+                  >
+                    {tier.name}
+                  </h3>
+                  {tier.mostPopular ? (
+                    <p className="rounded-full bg-indigo-600/10 px-2.5 py-1 text-xs font-semibold leading-5 text-indigo-600">
+                      Most popular
+                    </p>
+                  ) : null}
+                </div>
+                <p className="mt-4 text-sm leading-6 text-gray-600">{tier.description}</p>
+                <p className="mt-6 flex items-baseline gap-x-1">
+                    <span className="text-4xl font-bold tracking-tight text-gray-900">{tier.price}</span>
+                    {tier.id !== 'tier-enterprise' ? (
+                        <span className="text-sm font-semibold leading-6 text-gray-600">/draw</span>
+                    ) : null}
+                </p>
+                <ul role="list" className="mt-8 space-y-3 text-sm leading-6 text-gray-600">
+                  {tier.features.map((feature) => (
+                    <li key={feature.text} className="flex gap-x-3">
+                        {feature.included ? (
+                            <CheckIcon className="h-6 w-5 flex-none text-indigo-600" aria-hidden="true" />
+                        ) : (
+                            <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M4 10a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H4.75A.75.75 0 014 10z" clip-rule="evenodd"></path>
+                            </svg>
+                        )}
+
+                        {feature.text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <a
+                href={tier.href}
+                aria-describedby={tier.id}
+                className={classNames(
+                  tier.mostPopular
+                    ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500'
+                    : 'text-indigo-600 ring-1 ring-inset ring-indigo-200 hover:ring-indigo-300',
+                  'mt-8 block rounded-md py-2 px-3 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                )}
+              >
+                 {tier.cta}
+              </a>
+            </div>
+          ))}
+        </div>
 
 
-<div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-2">
+{/* <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-2">
         {tiers.map((tier, tierIdx) => (
           <div
             key={tier.id}
@@ -1129,7 +1105,7 @@ export default function Example() {
             </a>
           </div>
         ))}
-      </div>
+      </div> */}
 
 
                 </div>
