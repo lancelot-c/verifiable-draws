@@ -89,7 +89,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     uint16 requestConfirmations = 1;
 
     // Maximum number of words that can be received with fulfillRandomWords before reaching the gas limit
-    uint32 public constant MAX_NUM_WORDS = 43;
+    uint32 private constant MAX_NUM_WORDS = 40;
 
 
     constructor (
