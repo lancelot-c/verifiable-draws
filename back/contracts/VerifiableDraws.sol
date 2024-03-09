@@ -20,7 +20,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     error DrawAlreadyExists(string cid);
     error DrawDoesNotExist(string cid);
     error DrawTooEarly(string cid);
-    error DrawAlreadyTriggered(string cid);
+    error RequestAlreadyPending(string cid);
     error DrawAlreadyCompleted(string cid);
     error RequestDoesNotExist(uint256 id);
     error RequestAlreadyFulfilled(uint256 id);
@@ -56,7 +56,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         bytes entropy; // entropy used to pick winners
         bool entropyPending; // when the random numbers are being generated
         bool completed; // when the draw is done and entropy as been filled
-    }
+    }   
    
     mapping(string => Draw) private draws; // Content Identifier (CID) => Draw
     string[] private queue; // draws for which completed = false
@@ -88,6 +88,9 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     uint32 callbackGasLimit = 2500000;
     uint16 requestConfirmations = 1;
 
+    // Maximum number of words that can be received with fulfillRandomWords before reaching the gas limit
+    uint32 public constant MAX_NUM_WORDS = 43;
+
 
     constructor (
         uint64 subscriptionId
@@ -107,6 +110,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         uint32 nbWinners
     )
         external
+        onlyOwner
     {
         if (draws[cid].publishedAt != 0) {
             revert DrawAlreadyExists(cid);
@@ -255,7 +259,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
             }
 
             if (draws[cid].entropyPending) {
-                revert DrawAlreadyTriggered(cid);
+                revert RequestAlreadyPending(cid);
             }
 
             if (draws[cid].completed) {
@@ -276,36 +280,47 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         for (uint32 i = 0; i < requestedCids.length; i++) {
 
             string memory cid = requestedCids[i];
-            uint32 entropyNeeded = draws[cid].entropyNeeded;
+            uint32 entropyNeeded = draws[cid].entropyNeeded - uint32(draws[cid].entropy.length);
 
             // Each word gives an entropy of 32 bytes
-            uint32 numWords = divisionRoundUp(entropyNeeded, 32);
+            uint32 numWordsNeeded = divisionRoundUp(entropyNeeded, 32);
+            
+            while (numWordsNeeded > 0) {
 
-            // Will revert with error NumWordsTooBig if numWords > 500, see https://sepolia.arbiscan.io/address/0x50d47e4142598e3411aa864e08a44284e471ac6f#code#F18#L384
-            uint256 requestId = COORDINATOR.requestRandomWords(
-                keyHash,
-                s_subscriptionId,
-                requestConfirmations,
-                callbackGasLimit,
-                numWords
-            );
+                uint32 numWords = numWordsNeeded;
 
-            s_requests[requestId] = RequestStatus({
-                randomWords: new uint256[](0),
-                cid: cid,
-                fulfilled: false,
-                createdAt: block.timestamp
-            });
+                if (numWords > MAX_NUM_WORDS) {
+                    numWords = MAX_NUM_WORDS;
+                }
 
-            emit RandomnessRequested(
-                requestId,
-                cid,
-                numWords,
-                keyHash,
-                s_subscriptionId,
-                requestConfirmations,
-                callbackGasLimit
-            );
+                numWordsNeeded -= numWords;
+                
+
+                uint256 requestId = COORDINATOR.requestRandomWords(
+                    keyHash,
+                    s_subscriptionId,
+                    requestConfirmations,
+                    callbackGasLimit,
+                    numWords
+                );
+
+                s_requests[requestId] = RequestStatus({
+                    randomWords: new uint256[](0),
+                    cid: cid,
+                    fulfilled: false,
+                    createdAt: block.timestamp
+                });
+
+                emit RandomnessRequested(
+                    requestId,
+                    cid,
+                    numWords,
+                    keyHash,
+                    s_subscriptionId,
+                    requestConfirmations,
+                    callbackGasLimit
+                );
+            }
 
         }
  
