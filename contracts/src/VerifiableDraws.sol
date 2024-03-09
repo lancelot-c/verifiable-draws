@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.23;
 
-import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol"; // ChainLink Automation
-import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol"; // ChainLink VRF
-import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol"; // ChainLink VRF
-import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol"; // Ownership
+import "chainlink/src/v0.8/automation/AutomationCompatible.sol"; // ChainLink Automation
+import "chainlink/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol"; // ChainLink VRF
+import "chainlink/src/v0.8/vrf/VRFConsumerBaseV2.sol"; // ChainLink VRF
+import "chainlink/src/v0.8/shared/access/ConfirmedOwner.sol"; // Ownership
 
 /**
  * @title Verifiable Draws Smart Contract
