@@ -354,13 +354,22 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         emit RandomnessFulfilled(_requestId, _randomWords);
 
         bytes memory totalEntropy = abi.encodePacked(_randomWords);
+        uint32 entropyNeeded = draws[cid].entropyNeeded - uint32(draws[cid].entropy.length);
 
-        draws[cid].entropy = extractBytes(totalEntropy, 0, draws[cid].entropyNeeded);
-        draws[cid].occuredAt = block.number;
-        draws[cid].entropyPending = false;
-        draws[cid].completed = true;
-        
-        emit DrawCompleted(cid);
+        if (entropyNeeded > totalEntropy.length) {
+            entropyNeeded = uint32(totalEntropy.length);
+        }
+
+        bytes memory newEntropy = extractBytes(totalEntropy, entropyNeeded);
+
+        draws[cid].entropy = bytes.concat(draws[cid].entropy, newEntropy);
+
+        if (draws[cid].entropy.length == draws[cid].entropyNeeded) {
+            draws[cid].occuredAt = block.number;
+            draws[cid].entropyPending = false;
+            draws[cid].completed = true;
+            emit DrawCompleted(cid);
+        }
     }
 
 
@@ -393,9 +402,9 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
 
     function checkDrawWinners(string memory draw_identifier) external view returns (uint32[] memory) {
 
-        bytes memory totalEntropy = draws[draw_identifier].entropy;
-        require(totalEntropy.length != 0, "The draw has not occured yet. Come back later.");
+        require(draws[draw_identifier].completed, "The draw has not occured yet. Come back later.");
 
+        bytes memory totalEntropy = draws[draw_identifier].entropy;
         uint32 nbWinners = draws[draw_identifier].nbWinners;
         uint32 nbParticipants = draws[draw_identifier].nbParticipants;
         uint32[] memory winnerIndexes = new uint32[](nbWinners); // Fixed sized array, all elements initialize to 0
@@ -463,13 +472,13 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     }
 
 
-    function extractBytes(bytes memory data, uint32 from, uint32 n) private pure returns (bytes memory) {
+    function extractBytes(bytes memory data, uint32 n) private pure returns (bytes memory) {
         
-        require(data.length >= from + n, "Slice out of bounds");
+        require(data.length >= n, "Slice out of bounds");
         
         bytes memory returnValue = new bytes(n);
         for (uint32 i = 0; i < n; i++) {
-            returnValue[i] = data[from + i]; 
+            returnValue[i] = data[i]; 
         }
         return returnValue;
     }
