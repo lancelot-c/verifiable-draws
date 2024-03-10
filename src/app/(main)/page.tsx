@@ -961,7 +961,7 @@ export default function Example() {
             <div
               key={tier.id}
               className={classNames(
-                tier.mostPopular ? 'lg:z-10 lg:rounded-b-none ring-2 ring-indigo-600' : 'lg:mt-8 ring-1 ring-gray-200',
+                tier.mostPopular ? 'lg:z-10 ring-2 ring-indigo-600' : 'lg:my-8 ring-1 ring-gray-200',
                 tierIdx === 0 ? 'lg:rounded-r-none' : '',
                 tierIdx === tiers.length - 1 ? 'lg:rounded-l-none' : '',
                 'flex flex-col justify-between rounded-3xl bg-white p-8 xl:p-10'
@@ -1013,7 +1013,7 @@ export default function Example() {
                 aria-describedby={tier.id}
                 className={classNames(
                   tier.mostPopular
-                    ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 pointer-events-none'
+                    ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 pointer-events-none mb-8'
                     : 'text-indigo-600 ring-1 ring-inset ring-indigo-200 hover:ring-indigo-300',
                   'mt-8 block rounded-md py-2 px-3 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
                 )}

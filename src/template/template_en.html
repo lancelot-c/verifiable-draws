@@ -77,14 +77,6 @@
             margin-right: 16px;
         }
 
-        .no-leading-zero {
-            list-style: decimal;
-        }
-
-        .leading-zero {
-            list-style: decimal-leading-zero;
-        }
-
         li {
             padding-left: 8px;
             margin: 8px 0px;
@@ -110,10 +102,18 @@
             text-align: center;
             color: #ffffff;
             background-image: linear-gradient(to left, violet, indigo, blue, green, #969668, #dc8e00, red);
-            width: 200px;
+            width: 250px;
             margin-block-start: -0.9em;
             margin-block-end: 0.83em;
             padding: 0px 15px;
+        }
+
+        ul {
+            list-style: decimal inside;
+            padding: 0px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
         }
 
         .winners ul {
@@ -334,7 +334,7 @@
         // Handling time
         const timestamp = {{ drawScheduledAt }}; // in sec
         const scheduledAt = new Date(timestamp * 1000);
-        const scheduledAtString = new Intl.DateTimeFormat('en-US', { dateStyle: 'short', timeStyle: 'short' }).format(scheduledAt);
+        const scheduledAtString = new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeStyle: 'short' }).format(scheduledAt);
         populateDom('scheduledAtString', scheduledAtString)
         const scheduledAtElmt = document.getElementsByClassName("scheduledAt")[0];
         const loadingElmt = document.getElementsByClassName("drawOngoing")[0];
@@ -448,7 +448,7 @@
         }
 
         async function displayWinners(winners) {
-            console.log(`We have some winners 🎉`);
+            console.log(`We have ${winners.length} winners 🎉`);
             loadingElmt.style.display = 'none';
             scheduledAtElmt.style.display = 'none';
             occuredAtElmt.style.display = 'flex';
@@ -466,6 +466,7 @@
                 winnersPluralElement.innerHTML = 's';
             }
             
+            populateDom('drawNbWinners', winners.length);
             winnersElement.style.display = 'block';
 
 
@@ -518,7 +519,7 @@
 
             <div>
                 <p class="scheduledAt">
-                    This draw is scheduled for <span class="var_scheduledAtString"></span>. Come back to this page after this date to see the winners.
+                    This random draw is scheduled for <span class="var_scheduledAtString"></span>. Come back to this page after this date to see the winners.
                 </p>
                 <div class="drawOngoing">
                     <div class="first-line">
@@ -527,7 +528,7 @@
                     </div>
                 </div>
                 <div class="occuredAt">
-                    <div style="margin-right:4px;">This draw occured on</div>
+                    <div style="margin-right:4px;">This random draw occured on</div>
                     <div class="var_scheduledAtString"></div>
                 </div>
             </div>
@@ -535,8 +536,8 @@
         <hr />
 
         <div class="draw-parameter winners">
-            <h2>Winner<span class="plural-winners"></span>:</h2>
-            <ul class="draw-parameter__value winners__list no-leading-zero">
+            <h2><span class="var_drawNbWinners"></span> Winner<span class="plural-winners"></span>:</h2>
+            <ul class="draw-parameter__value winners__list">
             </ul>
             <p class="draw-parameter__value verify-sentence">
                 You don't trust this result ?
@@ -556,7 +557,7 @@
 
         <div class="draw-parameter">
             <h2><span class="var_drawNbParticipants"></span> Participants:</h2>
-            <ul class="draw-parameter__value var_drawParticipants leading-zero">
+            <ul class="draw-parameter__value var_drawParticipants">
             </ul>
         </div>
 
