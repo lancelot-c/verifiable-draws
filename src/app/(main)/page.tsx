@@ -226,7 +226,7 @@ const tiers = [
         description: 'Try the most secure random draw algorithm currently on the market for free.',
         features: [
             { included: true, text: 'Up to 10,000 participants' },
-            { included: true, text: 'Up to 4 winners' },
+            { included: true, text: 'Up to 100 winners' },
             { included: true, text: 'Deployed on Arbitrum Sepolia testnet' },
             { included: true, text: 'Accessible on our IPFS gateway verify.win' },
         ],
@@ -241,7 +241,7 @@ const tiers = [
         description: 'Deploy on the open web: trustless, censorship resistant, and free of centralized gatekeepers.',
         features: [
             { included: true, text: 'Up to 1,000,000 participants' },
-            { included: true, text: 'Up to 1,000 winners' },
+            { included: true, text: 'Up to 250 winners' },
             { included: true, text: 'Deployed on Arbitrum One mainnet' },
             { included: true, text: 'Accessible on our IPFS gateway verify.win' },
             { included: true, text: 'Accessible on all public IPFS gateways' },
@@ -1007,7 +1007,7 @@ export default function Example() {
                   ))}
                 </ul>
               </div>
-              
+
               <a
                 href={tier.href}
                 aria-describedby={tier.id}
