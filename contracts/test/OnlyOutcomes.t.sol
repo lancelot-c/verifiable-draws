@@ -22,7 +22,7 @@ contract OnlyOutcomes is Test {
         nbParticipants = range;
 
         outputPath = string.concat(
-            "script-outputs/OnlyOutcomes-",
+            "OnlyOutcomes-",
             Strings.toString(range),
             "-",
             Strings.toString(positions),
@@ -56,9 +56,9 @@ contract OnlyOutcomes is Test {
             // Then it is fine to convert the result to a 32-bit integer because we know that the output of the modulo will always be stricly less than nbParticipants which is a 32-bit integer
             uint32 randomNumber = uint32(uint64(extractedEntropy) % uint64(nbParticipants - i));
             uint32 nextWinner = randomNumber + 1; // We increment to convert the index to a line number
-
+            uint32 j = 0;
             
-            for (uint32 j = 0; j < i; j++) {
+            for (j = 0; j < i; j++) {
                 if (winnerIndexes[j] <= nextWinner) {
                     nextWinner++;
                 } else {
@@ -66,7 +66,7 @@ contract OnlyOutcomes is Test {
                 }
             }
             
-            for (uint32 k = i-1; k > j; k--) {
+            for (uint32 k = i; k > j; k--) {
                 winnerIndexes[k] = winnerIndexes[k-1];
             }
 
@@ -108,5 +108,5 @@ contract OnlyOutcomes is Test {
             )
         );
     }
-    
+
 }
