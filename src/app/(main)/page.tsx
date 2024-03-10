@@ -241,7 +241,7 @@ const tiers = [
         description: 'Deploy on the open web: trustless, censorship resistant, and free of centralized gatekeepers.',
         features: [
             { included: true, text: 'Up to 1,000,000 participants' },
-            { included: true, text: 'Up to 250 winners' },
+            { included: true, text: 'Up to 500 winners' },
             { included: true, text: 'Deployed on Arbitrum One mainnet' },
             { included: true, text: 'Accessible on our IPFS gateway verify.win' },
             { included: true, text: 'Accessible on all public IPFS gateways' },
