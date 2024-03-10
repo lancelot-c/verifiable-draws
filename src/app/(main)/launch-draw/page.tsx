@@ -697,7 +697,7 @@ export default function Page() {
                                     <div className="text-center">
                                         <p className="mt-8 text-md">
                                             Your draw has successfully been deployed on IPFS & Ethereum. 🎉<br />
-                                            You can now share the following IPFS link with the participants so that they can access the draw results in trustless way.
+                                            You can now share the following IPFS link with the participants so that they can access the draw results in a trustless way.
                                         </p>
 
 
