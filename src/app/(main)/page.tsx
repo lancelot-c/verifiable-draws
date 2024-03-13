@@ -225,6 +225,7 @@ const tiers = [
         price: '$0',
         description: 'Try the most secure random draw algorithm currently on the market for free.',
         features: [
+            { included: true, text: 'No wallet required' },
             { included: true, text: 'Up to 10,000 participants' },
             { included: true, text: 'Up to 100 winners' },
             { included: true, text: 'Deployed on Arbitrum Sepolia testnet' },
@@ -237,7 +238,7 @@ const tiers = [
         name: 'Startup',
         id: 'tier-pro',
         href: '/launch-draw',
-        price: '$9',
+        price: '$19',
         description: 'Deploy on the open web: trustless, censorship resistant, and free of centralized gatekeepers.',
         features: [
             { included: true, text: 'Up to 1,000,000 participants' },

@@ -29,7 +29,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
 
     /*** Events ***/
 
-    event DrawLaunched(string cid, uint64 publishedAt, uint64 scheduledAt, uint32 entropyNeeded);
+    event DrawLaunched(string cid);
     event DrawLaunchedBatch(string[] cids);
     event RandomnessRequested(
         uint256 requestId,
@@ -47,9 +47,9 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     /*** Draws ***/
 
     struct Draw {
-        uint64 publishedAt; // block number at which the draw was published on the contract
+        uint64 publishedAt; // timestamp at which the draw was published on the contract
         uint64 scheduledAt; // timestamp at which the draw should be triggered
-        uint256 occuredAt; // block number at which the draw has occurred
+        uint64 occuredAt; // timestamp at which the draw has occurred
         uint32 nbParticipants; // number of participants
         uint32 nbWinners; // number of winners to select for this draw
         uint32 entropyNeeded; // number of bytes of information needed to compute winners
@@ -58,9 +58,11 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         bool completed; // when the draw is done and entropy as been filled
     }   
    
-    mapping(string => Draw) private draws; // Content Identifier (CID) => Draw
-    string[] private queue; // draws for which completed = false
-    uint32 private drawCount = 0;
+    uint32 public drawCount = 0;
+    mapping(uint32 => string) public cids; // Draw index => Draw CID
+    mapping(string => Draw) public draws; // Draw CID => Draw object
+    string[] public queue; // Draws scheduled for later
+    
     uint32 private entropyNeededPerWinner = 8; // Retrieving 8 bytes (64 bits) of entropy for each winner is enough to have an infinitely small scaling bias
 
 
@@ -82,9 +84,9 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     uint64 private s_subscriptionId;
 
     // See https://docs.chain.link/vrf/v2/subscription/supported-networks
-    address link_token_contract = 0xb1D4538B4571d411F07960EF2838Ce337FE1E80E;
-    address vrfCoordinator = 0x50d47e4142598E3411aA864e08a44284e471AC6f;
-    bytes32 keyHash = 0x027f94ff1465b3525f9fc03e9ff7d6d2c0953482246dd6ae07570c45d6631414;
+    address link_token_contract = 0xf97f4df75117a78c1A5a0DBb814Af92458539FB4;
+    address vrfCoordinator = 0x41034678D6C633D8a95c75e1138A360a28bA15d1;
+    bytes32 keyHash = 0x68d24f9a037a649944964c2a1ebd0b2918f4a243d2a99701cc22b548cf2daff0;
     uint32 callbackGasLimit = 2500000;
     uint16 requestConfirmations = 1;
 
@@ -116,19 +118,20 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
             revert DrawAlreadyExists(cid);
         }
 
-        uint64 publishedAt = uint64(block.number);
-        uint256 occuredAt = 0;
+        uint64 publishedAt = uint64(block.timestamp);
+        uint64 occuredAt = 0;
         bytes memory entropy = "";
         uint32 entropyNeeded = computeEntropyNeeded(nbWinners);
         draws[cid] = Draw(publishedAt, scheduledAt, occuredAt, nbParticipants, nbWinners, entropyNeeded, entropy, false, false);
         drawCount++;
+        cids[drawCount] = cid;
 
-        emit DrawLaunched(cid, publishedAt, scheduledAt, entropyNeeded);
+        emit DrawLaunched(cid);
 
         if (block.timestamp >= scheduledAt) {
-            string[] memory cids = new string[](1);
-            cids[0] = cid;
-            generateEntropyFor(cids);
+            string[] memory _cids = new string[](1);
+            _cids[0] = cid;
+            generateEntropyFor(_cids);
         } else {
             queue.push(cid);
         }
@@ -161,11 +164,12 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
                 revert DrawAlreadyExists(cid);
             }
 
-            uint64 publishedAt = uint64(block.number);
-            uint256 occuredAt = 0;
+            uint64 publishedAt = uint64(block.timestamp);
+            uint64 occuredAt = 0;
             bytes memory entropy = "";
             draws[cid] = Draw(publishedAt, scheduledAt, occuredAt, nbParticipants, nbWinners, entropyNeeded, entropy, false, false);
             drawCount++;
+            cids[drawCount] = cid;
 
             if (block.timestamp >= scheduledAt) {
                 isReady[i] = true;
@@ -241,14 +245,14 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         override
     {
         uint32[] memory queueIdx = abi.decode(performData, (uint32[]));
-        string[] memory requestedCids = new string[](queueIdx.length);
+        string[] memory _cids = new string[](queueIdx.length);
 
         // We revalidate the draws in the performUpkeep to prevent malicious actors
         // from calling performUpkeep with wrong parameters 
         for (uint64 i = 0; i < queueIdx.length; i++) {
 
             string memory cid = queue[queueIdx[i]];
-            requestedCids[i] = cid;
+            _cids[i] = cid;
             
             if (draws[cid].publishedAt == 0) {
                 revert DrawDoesNotExist(cid);
@@ -270,16 +274,16 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         }
 
         removeIndexesFromArray(queue, queueIdx);
-        generateEntropyFor(requestedCids);
+        generateEntropyFor(_cids);
     }
 
-    function generateEntropyFor(string[] memory requestedCids)
+    function generateEntropyFor(string[] memory _cids)
         private
     {
 
-        for (uint32 i = 0; i < requestedCids.length; i++) {
+        for (uint32 i = 0; i < _cids.length; i++) {
 
-            string memory cid = requestedCids[i];
+            string memory cid = _cids[i];
             uint32 entropyNeeded = draws[cid].entropyNeeded - uint32(draws[cid].entropy.length);
 
             // Each word gives an entropy of 32 bytes
@@ -365,7 +369,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         draws[cid].entropy = bytes.concat(draws[cid].entropy, newEntropy);
 
         if (draws[cid].entropy.length == draws[cid].entropyNeeded) {
-            draws[cid].occuredAt = block.number;
+            draws[cid].occuredAt = uint64(block.timestamp);
             draws[cid].entropyPending = false;
             draws[cid].completed = true;
             emit DrawCompleted(cid);
@@ -386,18 +390,6 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         }
 
         return (request.fulfilled, request.randomWords);
-    }
-
-    function getDrawCount() external view onlyOwner returns (uint32) {
-        return drawCount;
-    }
-
-    function getDrawDetails(string memory cid) external view returns (Draw memory) {
-        return draws[cid];
-    }
-
-    function getRandomnessForDraw(string memory cid) external view returns (bytes memory) {
-        return draws[cid].entropy;
     }
 
     function checkDrawWinners(string memory draw_identifier) external view returns (uint32[] memory) {
@@ -438,10 +430,6 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         }
 
         return winnerIndexes;
-    }
-
-    function getQueue() external view onlyOwner returns (string[] memory) {
-        return queue;
     }
 
 
