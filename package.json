@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@arbitrum/sdk": "^3.3.1",
     "@chainlink/contracts": "^0.6.1",
     "@fireworks-js/react": "^2.10.7",
     "@headlessui/react": "^1.7.15",
@@ -29,7 +28,6 @@
     "@web3-onboard/injected-wallets": "^2.10.11",
     "@web3-onboard/ledger": "^2.5.2",
     "@web3-onboard/react": "^2.8.13",
-    "@web3-onboard/trezor": "^2.4.3",
     "@web3-onboard/walletconnect": "^2.5.3",
     "autoprefixer": "10.4.14",
     "axios": "^1.4.0",
@@ -51,11 +49,13 @@
     "node-fetch": "^3.3.2",
     "pg": "^8.10.0",
     "pg-hstore": "^2.3.4",
+    "pino-pretty": "^10.3.1",
     "postcss": "8.4.24",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.45.0",
     "sequelize": "^6.30.0",
+    "sharp": "^0.33.2",
     "tailwindcss": "3.3.2",
     "typescript": "5.1.3"
   },

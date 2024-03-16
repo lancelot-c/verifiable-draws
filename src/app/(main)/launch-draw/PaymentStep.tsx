@@ -3,7 +3,6 @@ import { init, useConnectWallet } from '@web3-onboard/react'
 import type { TokenSymbol } from '@web3-onboard/common'
 import injectedModule from '@web3-onboard/injected-wallets'
 import ledgerModule from '@web3-onboard/ledger'
-import trezorModule from '@web3-onboard/trezor'
 import walletConnectModule from '@web3-onboard/walletconnect'
 import coinbaseModule from '@web3-onboard/coinbase'
 import { ethers, Contract } from 'ethers'
@@ -37,19 +36,11 @@ const walletConnect = walletConnectModule({ projectId: '442d149732b9dd3f51bf05c7
 const coinbase = coinbaseModule()
 const ledger = ledgerModule({ walletConnectVersion: 2, projectId: '442d149732b9dd3f51bf05c71ae62fd5' })
 
-const trezorOptions = {
-    email: 'test@test.com',
-    appUrl: 'https://www.blocknative.com'
-}
-
-const trezor = trezorModule(trezorOptions)
-
 const wallets = [
     injected,
     walletConnect,
     coinbase,
-    ledger,
-    trezor,
+    ledger
 ]
 
 

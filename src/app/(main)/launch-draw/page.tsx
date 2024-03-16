@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import React from "react";
 import { CheckIcon, CheckCircleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
@@ -123,7 +122,6 @@ const drawNbWinnersPlaceholder = 1;
 
 export default function Page() {
 
-    const searchParams = useSearchParams()
     const dt_min = new Date();
 
     const safetyCushionMin = (process.env.NEXT_PUBLIC_APP_ENV === 'test') ? 0 : 0;
@@ -176,7 +174,7 @@ export default function Page() {
             ignore = true;
         };
 
-    }, [currentStep])
+    }, [currentStep, ethPrice])
 
     function previousStep() {
         setSelectedStep(selectedStep - 1 as StepNumber)
