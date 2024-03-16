@@ -125,7 +125,7 @@ async function createDraw(
     // Pin draw file on IPFS
     if (mainnet) {
 
-        const tempFilepath = path.join(process.cwd(), `/src/template/${generatedCid}.html`);
+        const tempFilepath = `/tmp/${generatedCid}.html`;
         fs.writeFileSync(tempFilepath, content);
 
         const ipfsCid = await pinFileToIPFS(tempFilepath);
