@@ -4,28 +4,22 @@ import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import React from "react";
-import { loadStripe, StripeElementsOptions, PaymentIntent } from "@stripe/stripe-js";
-// import { Elements } from "@stripe/react-stripe-js";
-import { CheckCircleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/20/solid'
-// import CheckoutForm from "./CheckoutForm";
+import { CheckIcon, CheckCircleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import PaymentStep from './PaymentStep'
+
+
+
+
+
+
 const websiteBasePaths = (process.env.NEXT_PUBLIC_APP_ENV === 'test') ? ['http://localhost:3000/ipfs?cid='] : ['http://verify.win/']
-const stripePublicKey = (process.env.NEXT_PUBLIC_STRIPE_ENV === 'test') ? process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY_TEST : process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY_PROD;
-
-if (!stripePublicKey) {
-    throw new Error("stripePublicKey is undefined")
-}
-
-// Make sure to call loadStripe outside of a component’s render to avoid
-// recreating the Stripe object on every render.
-// const stripePromise = loadStripe(stripePublicKey);
 
 
 const steps = [
     { name: 'Edit your draw details', href: '#step1' },
-    // { name: 'Participants', href: '#step2' },
     { name: 'Schedule the random draw', href: '#step2' },
-    // { name: 'Purchase', href: '#step4' },
-    { name: 'Share the link', href: '#step3' },
+    { name: 'Deploy', href: '#step3' },
+    { name: 'Share the link', href: '#step4' },
 ]
 
 type FormInputs = {
@@ -41,12 +35,15 @@ type FormInputs = {
     step3?: {
 
     },
+    step4?: {
+
+    },
 }
 
 const drawNamePlaceholder = 'My great contest';
 
 const drawRulesPlaceholder =
-`The participants for this contest are all the people who mentioned 2 of their friends in the comments of this Instagram post: https://www.instagram.com/p/Ct7jt-motWO6svTyXoQbbpDfU3F-kv6XTXXqEY0/
+    `The participants for this contest are all the people who mentioned 2 of their friends in the comments of this Instagram post: https://www.instagram.com/p/Ct7jt-motWO6svTyXoQbbpDfU3F-kv6XTXXqEY0/
 We will now randomly select one lucky winner among the participants.
 This person will win a 2-week holiday to The Maldives.`;
 
@@ -128,14 +125,14 @@ export default function Page() {
 
     const searchParams = useSearchParams()
     const dt_min = new Date();
-    
+
     const safetyCushionMin = (process.env.NEXT_PUBLIC_APP_ENV === 'test') ? 0 : 0;
     const safetyCushionDefault = (process.env.NEXT_PUBLIC_APP_ENV === 'test') ? 0 : 10;
     dt_min.setMinutes(dt_min.getMinutes() - dt_min.getTimezoneOffset() + safetyCushionMin);
 
     const dt_default = new Date(dt_min);
     // dt_default.setMinutes(dt_min.getMinutes() - dt_min.getTimezoneOffset() + safetyCushionDefault);
-    
+
     const scheduledAtMinValue = dt_min.toISOString().slice(0, 16);
     const scheduledAtDefaultValue = dt_default.toISOString().slice(0, 16);
 
@@ -154,107 +151,32 @@ export default function Page() {
     });
 
     const showErrorsOnBlur = true
-    type StepNumber = 1 | 2 | 3
+    type StepNumber = 1 | 2 | 3 | 4
     const startAtStep = 1
-    // const paymentStep = 4
-    const shareStep = 3
+    const paymentStep = 3
+    const shareStep = 4
 
     const [currentStep, setCurrentStep] = useState<StepNumber>(startAtStep)
     const [selectedStep, setSelectedStep] = useState<StepNumber>(currentStep)
-    const [clientSecret, setClientSecret] = useState<string>('');
     const [cid, setCid] = useState<string>('');
     const [deployError, setDeployError] = useState<string>('');
     const [deployInProgress, setDeployInProgress] = useState<boolean>(false);
     const [drawLinks, setDrawLinks] = useState<string[]>([]);
-    const [paymentIntent, setPaymentIntent] = useState<PaymentIntent | undefined>(undefined);
- 
-    // useEffect(() => {
-    //     if (currentStep !== paymentStep) {
-    //         return;
-    //     }
-
-    //     if (searchParams.has('code')) {
-    //         nextStep(`step3`);
-    //         return;
-    //     }
-
-    //     let ignore = false;
-
-    //     fetch("/api/payment/create", {
-    //         method: "POST",
-    //         headers: { "Content-Type": "application/json" },
-    //         body: JSON.stringify({}),
-    //     })
-    //         .then((res) => res.json())
-    //         .then((data) => {
-    //             if (!ignore) {
-    //                 setClientSecret(data.clientSecret)
-    //             }
-    //         });
-
-    //     return () => {
-    //         ignore = true;
-    //     };
-
-    // }, [currentStep])
+    const [ethPrice, setEthPrice] = useState<number>(0);
 
     useEffect(() => {
-        if (currentStep !== shareStep) {
+        if (currentStep !== paymentStep || ethPrice > 0) {
             return;
         }
 
         let ignore = false;
-
-        const [drawTitle, drawRules, drawParticipants, drawNbWinners] = getValues(["step1.name", "step1.rules", "step1.participants", "step1.nbWinners"]);
-        const drawScheduledAt = Math.ceil(getTimestampFromIso(getValues("step2.scheduledAt")) / 1000); // in seconds
-        setDeployInProgress(true);
-
-        let jsonBody = {
-            drawTitle,
-            drawRules,
-            drawParticipants,
-            drawNbWinners,
-            drawScheduledAt,
-            code: '',
-            paymentIntentId: ''
-        };
-
-        const hasCode = true; // replace by searchParams.has('code')
-
-        if (hasCode) { 
-            jsonBody.code = searchParams.get('code') as string;
-        } else if (paymentIntent) {
-            jsonBody.paymentIntentId = paymentIntent?.id as string;
-        }
-
-        fetch("/api/draw/deploy", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(jsonBody),
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (!ignore) {
-
-                    setDeployInProgress(false)
-
-                    if (data.response.cid) {
-                        setCid(data.response.cid);
-                        setDrawLinks(websiteBasePaths.map(basePath => `${basePath}${data.response.cid}`))
-                    }
-
-                    if (data.error) {
-                        setDeployError(data.error.message);
-                    }
-
-                }
-
-            });
+        fetchEthPrice();
 
         return () => {
             ignore = true;
         };
-    }, [currentStep, paymentIntent, getValues])
+
+    }, [currentStep])
 
     function previousStep() {
         setSelectedStep(selectedStep - 1 as StepNumber)
@@ -286,33 +208,56 @@ export default function Page() {
     }
 
 
-    // const options: StripeElementsOptions = {
-    //     clientSecret,
-    //     fonts: [{ cssSrc: 'https://fonts.googleapis.com/css?family=Inter' }],
-    //     appearance: {
-    //         theme: 'stripe',
-    //         variables: {
-    //             fontFamily: 'Inter',
-    //             colorPrimary: '#4f46e5', // = Tailwind indigo-600 color
-    //         },
-    //         disableAnimations: false,
-    //         labels: 'above'
-    //     },
-    //     loader: 'always',
-    // };
+    function fetchEthPrice() {
+        fetch("/api/payment/eth-usd-price", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        })
+            .then(res => res.json())
+            .then(data => {
 
+                setEthPrice(data.ethereum.usd);
+            });
+    }
 
-    // async function onPaymentSuccess(paymentIntent: PaymentIntent) {
+    async function deploy(mainnet: boolean, owner?: string) {
+        await nextStep(`step${shareStep}`);
 
-    //     const [drawTitle, drawRules, drawParticipants, drawNbWinners, drawScheduledAt] = getValues(["step1.name", "step1.rules", "step2.participants", "step2.nbWinners", "step3.scheduledAt"]);
+        const [drawTitle, drawRules, drawParticipants, drawNbWinners] = getValues(["step1.name", "step1.rules", "step1.participants", "step1.nbWinners"]);
+        const drawScheduledAt = Math.ceil(getTimestampFromIso(getValues("step2.scheduledAt")) / 1000); // in seconds
+        setDeployInProgress(true);
 
-    //     if (!drawTitle || !drawRules || !drawParticipants || !drawNbWinners || !drawScheduledAt) {
-    //         return;
-    //     }
+        let jsonBody = {
+            owner,
+            drawTitle,
+            drawRules,
+            drawParticipants,
+            drawNbWinners,
+            drawScheduledAt,
+            mainnet
+        };
 
-    //     setPaymentIntent(paymentIntent)
-    //     goToStep(5)();
-    // }
+        fetch("/api/draw/deploy", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(jsonBody),
+        })
+            .then(res => res.json())
+            .then(data => {
+
+                setDeployInProgress(false)
+
+                if (data.response.cid) {
+                    setCid(data.response.cid);
+                    setDrawLinks(websiteBasePaths.map(basePath => `${basePath}${data.response.cid}`))
+                }
+
+                if (data.error) {
+                    setDeployError(data.error.message);
+                }
+
+            });
+    }
 
     function validateScheduledAtFn() {
         return getTimestampFromIso(getValues("step2.scheduledAt")) >= getTimestampFromIso(scheduledAtMinValue)
@@ -457,7 +402,7 @@ export default function Page() {
 
                             <div className="col-span-full">
                                 <label htmlFor="rules" className="block text-sm font-medium leading-6 text-gray-900">
-                                    Rules
+                                    Rules (optional)
                                 </label>
                                 <div className="mt-2">
                                     <textarea
@@ -525,24 +470,14 @@ export default function Page() {
                     )
                 }
 
-
-                {/* {
-                    (selectedStep === 2) && (
-                        <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-
-                            
-                        </div>
-                    )
-                } */}
-
                 {
                     (selectedStep === 2) && (
                         <div className="mt-10">
 
                             <div className="text-center">
                                 <label htmlFor="scheduledAt" className="block text-sm font-normal leading-6 text-gray-900">
-                                Choose the date and time at which the random draw will happen.<br />
-                                ({(Intl.DateTimeFormat().resolvedOptions().timeZone)} time zone detected)
+                                    Choose the date and time at which the random draw will happen.<br />
+                                    ({(Intl.DateTimeFormat().resolvedOptions().timeZone)} time zone detected)
                                 </label>
                                 <div className="mt-2">
                                     <input
@@ -577,39 +512,14 @@ export default function Page() {
                     )
                 }
 
-                {/* Payment step, hidden by default but needs to always be in the DOM
-                to prevent re-rendering when the user switch between steps */}
-                {/* <div className={`flex flex-wrap justify-center justify-items-center items-center mt-10 w-full ${selectedStep === paymentStep ? '' : 'hidden'}`}>
-
-                    <p className="max-w-[600px] mt-0 px-8 sm:px-24 py-16 border-b lg:border-b-0 lg:border-r border-gray-200 text-md font-light tracking-wide text-gray-800 sm:text-md text-center">
-                        Because it is end-to-end decentralized, <span className="italic">Verifiable Draws</span> is the only draw platform which prevents all kinds of fraud.
-                        <br /><br />
-                        Therefore, by choosing us, you are contributing to make the world a better place and inspiring others to do the same.
-                        <br /><br />
-                        This is the last step before deploying your draw.<br />
-                        The decentralized world awaits you. ✨
-                    </p>
-
-                    <div className="min-w-[300px] max-w-[800px] flex-auto px-8 sm:px-24 py-16">
-                        <p className="mt-0 text-xl font-normal tracking-tight sm:mb-4 text-gray-800 sm:text-xl text-center">
-                            Purchase a single draw
-                        </p>
-
-                        <p className="mt-0 text-base font-normal tracking-tight sm:mb-4 text-gray-800 sm:text-base text-center">
-                            Total: 29,00€
-                        </p>
-
-                        {clientSecret && (
-                            <Elements options={options} stripe={stripePromise}>
-                                <CheckoutForm onPaymentSuccess={onPaymentSuccess} />
-                            </Elements>
-                        )}
-                    </div>
-
-                </div> */}
-
                 {
                     (selectedStep === 3) && (
+                        <PaymentStep ethPrice={ethPrice} deploy={deploy} />
+                    )
+                }
+
+                {
+                    (selectedStep === 4) && (
                         <div className="mt-10">
 
                             {/* <div className="rounded-md bg-green-50 p-4">
@@ -623,8 +533,8 @@ export default function Page() {
                                 </div>
                             </div> */}
 
-                            
-                            
+
+
                             {
                                 (deployInProgress) && (
 
@@ -662,7 +572,7 @@ export default function Page() {
                                                 <CheckCircleIcon className="h-5 w-5 text-green-400" aria-hidden="true" />
                                             </div>
                                             <div className="ml-3">
-                                                <p className="text-sm font-medium text-green-800">Draw successfully uploaded to verify.win/{ cid }</p>
+                                                <p className="text-sm font-medium text-green-800">Draw successfully uploaded to verify.win/{cid}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -673,7 +583,7 @@ export default function Page() {
 
                             {
                                 (deployError) && (
-                                    
+
                                     <div className="rounded-md bg-red-50 p-4 mt-4">
                                         <div className="flex">
                                             <div className="flex-shrink-0">
@@ -681,8 +591,8 @@ export default function Page() {
                                             </div>
                                             <div className="ml-3">
                                                 <p className="text-sm font-medium text-red-800">
-                                                    { deployError }<br />
-                                                    { (cid) ? 'Please send us the above IPFS link' : 'Please contact us' } using the chat at the bottom-right of this page so that we can investigate what went wrong.<br />
+                                                    {deployError}<br />
+                                                    {(cid) ? 'Please send us the above IPFS link' : 'Please contact us'} on Discord so that we can investigate what went wrong.<br />
                                                     We apologize for the inconvenience.
                                                 </p>
                                             </div>
@@ -692,8 +602,8 @@ export default function Page() {
                                 )
                             }
 
-                                {
-                                    (drawLinks.length > 0 && !deployError) && (
+                            {
+                                (drawLinks.length > 0 && !deployError) && (
                                     <div className="text-center">
                                         <p className="mt-8 text-md">
                                             Your draw has successfully been deployed on IPFS & Ethereum. 🎉<br />
@@ -704,7 +614,7 @@ export default function Page() {
                                         {drawLinks.map((drawLink) => (
                                             <div key={drawLink} className="rounded-md bg-white/50 ring-2 ring-indigo-800 my-12 px-8 py-4 text-xl flex justify-center">
                                                 <div className="text-ellipsis overflow-hidden mx-2">
-                                                    { shortenUrl(drawLink) }
+                                                    {shortenUrl(drawLink)}
                                                 </div>
 
                                                 <Link href={drawLink} rel="noopener" target="_blank" className="mx-2">
@@ -735,7 +645,7 @@ export default function Page() {
 
                 <div className="mt-6 flex items-center justify-end gap-x-6">
                     {
-                        (selectedStep > 1 && selectedStep < steps.length) && (
+                        (selectedStep > 1 && selectedStep < steps.length && selectedStep != paymentStep) && (
                             <button
                                 onClick={previousStep}
                                 className="text-sm font-semibold leading-6 text-gray-900"
@@ -745,7 +655,7 @@ export default function Page() {
                         )
                     }
                     {
-                        (selectedStep < steps.length) && (
+                        (selectedStep < steps.length && selectedStep != paymentStep) && (
                             <button
                                 type="button"
                                 onClick={async () => { await nextStep(`step${selectedStep}`) }}
@@ -756,6 +666,17 @@ export default function Page() {
                             </button>
                         )
                     }
+                    {/* {
+                        (selectedStep == paymentStep) && (
+                            <button
+                                type="button"
+                                onClick={async () => { await nextStep(`step${shareStep}`) }}
+                                className="px-3 py-2 text-sm font-semibold text-gray-700"
+                            >
+                                Deploy on testnet instead <span aria-hidden="true">→</span>
+                            </button>
+                        )
+                    } */}
                     {
                         (selectedStep === steps.length && drawLinks.length > 0) && (
                             <Link href="/">

@@ -3,7 +3,9 @@ import fsPromises from 'fs/promises';
 import path from 'path'
 import { ethers } from 'ethers';
 import { kv } from "@vercel/kv";
+import contractAbi from '../../../../assets/abi'
 
+const testMode = (process.env.NEXT_PUBLIC_APP_ENV != "prod");
 
 export async function GET(request: Request) {
 
@@ -43,17 +45,19 @@ export async function GET(request: Request) {
     } else {
 
         // Else retrieve from smart contract
+
+        const mainnet = network === 'arbitrum-mainnet';
         console.log(`No cache in KV store. Retrieving winners from the smart contract.`)
-        const providerBaseURL = (network === 'polygon-mainnet') ? process.env.MAINNET_API_URL : process.env.TESTNET_API_URL;
-        const providerKey = (network === 'polygon-mainnet') ? process.env.MAINNET_API_KEY : process.env.TESTNET_API_KEY;
-        const providerURL = `${providerBaseURL}${providerKey}`;
+        // const providerBaseURL = (network === 'polygon-mainnet') ? process.env.MAINNET_API_URL : process.env.TESTNET_API_URL;
+        // const providerKey = (network === 'polygon-mainnet') ? process.env.MAINNET_API_KEY : process.env.TESTNET_API_KEY;
+        const providerURL = (mainnet && !testMode) ? "https://arbiscan.io" : "https://sepolia.arbiscan.io";
 
         const jsonRpcProvider = new ethers.JsonRpcProvider(providerURL)
         const wallet = new ethers.Wallet(process.env.WALLET_PRIVATE_KEY, jsonRpcProvider);
 
-        const contractArtifactFilePath = path.join(process.cwd(), `src/assets/${process.env.CONTRACT_NAME}.json`);
-        const contractArtifact = await fsPromises.readFile(contractArtifactFilePath);
-        const contractAbi = JSON.parse(contractArtifact.toString()).abi;
+        // const contractArtifactFilePath = path.join(process.cwd(), `src/assets/${process.env.CONTRACT_NAME}.json`);
+        // const contractArtifact = await fsPromises.readFile(contractArtifactFilePath);
+        // const contractAbi = JSON.parse(contractArtifact.toString()).abi;
 
         const contract = new ethers.Contract(
             contractAddress,

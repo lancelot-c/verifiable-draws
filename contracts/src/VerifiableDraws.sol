@@ -10,13 +10,14 @@ import "chainlink/src/v0.8/shared/access/ConfirmedOwner.sol"; // Ownership
  * @title Verifiable Draws Smart Contract
  * @author Lancelot Chardonnet
  *
- * @notice This contract allows you to create decentralized random draws
+ * @notice This contract allows you to create verifiable random draws on https://www.verifiabledraws.com
  * 
  */
 contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, ConfirmedOwner {
 
     /*** Errors ***/
 
+    error NotEnoughFunds(address owner);
     error DrawAlreadyExists(string cid);
     error DrawDoesNotExist(string cid);
     error DrawTooEarly(string cid);
@@ -29,8 +30,8 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
 
     /*** Events ***/
 
-    event DrawLaunched(string cid);
-    event DrawLaunchedBatch(string[] cids);
+    event DrawDeployed(string cid);
+    event DrawDeployedBatch(string[] cids);
     event RandomnessRequested(
         uint256 requestId,
         string cid,
@@ -47,6 +48,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     /*** Draws ***/
 
     struct Draw {
+        address owner; // account who deployed the draw, i.e. the draw organizer
         uint64 publishedAt; // timestamp at which the draw was published on the contract
         uint64 scheduledAt; // timestamp at which the draw should be triggered
         uint64 occuredAt; // timestamp at which the draw has occurred
@@ -62,6 +64,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     mapping(uint32 => string) public cids; // Draw index => Draw CID
     mapping(string => Draw) public draws; // Draw CID => Draw object
     string[] public queue; // Draws scheduled for later
+    mapping(address => uint256) public balances; // Account => ETH balance
     
     uint32 private entropyNeededPerWinner = 8; // Retrieving 8 bytes (64 bits) of entropy for each winner is enough to have an infinitely small scaling bias
 
@@ -105,28 +108,19 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     }
 
 
-    function launchDraw(
+    function deployDraw(
+        address owner,
         string memory cid,
         uint64 scheduledAt,
         uint32 nbParticipants,
-        uint32 nbWinners
+        uint32 nbWinners,
+        uint256 price
     )
         external
         onlyOwner
     {
-        if (draws[cid].publishedAt != 0) {
-            revert DrawAlreadyExists(cid);
-        }
-
-        uint64 publishedAt = uint64(block.timestamp);
-        uint64 occuredAt = 0;
-        bytes memory entropy = "";
-        uint32 entropyNeeded = computeEntropyNeeded(nbWinners);
-        draws[cid] = Draw(publishedAt, scheduledAt, occuredAt, nbParticipants, nbWinners, entropyNeeded, entropy, false, false);
-        drawCount++;
-        cids[drawCount] = cid;
-
-        emit DrawLaunched(cid);
+        storeDraw(owner, cid, scheduledAt, nbParticipants, nbWinners, price);
+        emit DrawDeployed(cid);
 
         if (block.timestamp >= scheduledAt) {
             string[] memory _cids = new string[](1);
@@ -138,12 +132,14 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         
     }
 
-    function batchLaunchDraw(
+    function batchDeployDraw(
         uint32 batchSize,
+        address[] memory ownerArray,
         string[] memory cidArray,
         uint64[] memory scheduledAtArray,
         uint32[] memory nbParticipantsArray,
-        uint32[] memory nbWinnersArray
+        uint32[] memory nbWinnersArray,
+        uint256 price
     )
         external
         onlyOwner
@@ -156,20 +152,8 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
 
             string memory cid = cidArray[i];
             uint64 scheduledAt = scheduledAtArray[i];
-            uint32 nbParticipants = nbParticipantsArray[i];
-            uint32 nbWinners = nbWinnersArray[i];
-            uint32 entropyNeeded = computeEntropyNeeded(nbWinners);
-
-            if (draws[cid].publishedAt != 0) {
-                revert DrawAlreadyExists(cid);
-            }
-
-            uint64 publishedAt = uint64(block.timestamp);
-            uint64 occuredAt = 0;
-            bytes memory entropy = "";
-            draws[cid] = Draw(publishedAt, scheduledAt, occuredAt, nbParticipants, nbWinners, entropyNeeded, entropy, false, false);
-            drawCount++;
-            cids[drawCount] = cid;
+            
+            storeDraw(ownerArray[i], cid, scheduledAt, nbParticipantsArray[i], nbWinnersArray[i], price);
 
             if (block.timestamp >= scheduledAt) {
                 isReady[i] = true;
@@ -194,9 +178,42 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
             generateEntropyFor(readyCids);
         }
 
-        emit DrawLaunchedBatch(cidArray);
+        emit DrawDeployedBatch(cidArray);
         
     }
+
+
+    function storeDraw(
+        address _owner,
+        string memory cid,
+        uint64 scheduledAt,
+        uint32 nbParticipants,
+        uint32 nbWinners,
+        uint256 price
+    )
+        private
+    {
+
+        if (draws[cid].publishedAt != 0) {
+            revert DrawAlreadyExists(cid);
+        }
+
+        if (_owner != owner()) {
+            if (balances[_owner] < price) {
+                revert NotEnoughFunds(_owner);
+            }
+            balances[_owner] -= price;
+        }
+
+        uint64 publishedAt = uint64(block.timestamp);
+        uint64 occuredAt = 0;
+        bytes memory entropy = "";
+        uint32 entropyNeeded = nbWinners * entropyNeededPerWinner;
+        draws[cid] = Draw(_owner, publishedAt, scheduledAt, occuredAt, nbParticipants, nbWinners, entropyNeeded, entropy, false, false);
+        drawCount++;
+        cids[drawCount] = cid;
+    }
+
 
     function checkUpkeep(
         bytes calldata /* checkData */
@@ -440,13 +457,27 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     }
 
 
-    /*** Utils ***/
 
+    /*** Payment ***/
 
-    function computeEntropyNeeded(uint32 nbWinners) private view returns (uint32) {
-        return nbWinners * entropyNeededPerWinner;
+    function topUp(address _recipient) external payable {
+        require(msg.value > 0, "Empty top up");
+        balances[_recipient] += msg.value;
     }
 
+    function withdraw(address _recipient) external onlyOwner {
+        uint256 ethBalance = address(this).balance;
+        require(ethBalance > 0, "Nothing to withdraw");
+        payable(_recipient).transfer(ethBalance);
+    }
+
+    receive() external payable { }
+
+    fallback() external payable { }
+
+
+
+    /*** Utils ***/
 
     // Division rounds down by default in Solidity, this function rounds up
     function divisionRoundUp(uint32 a, uint32 m) private pure returns (uint32) {

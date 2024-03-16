@@ -117,7 +117,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <div className="bg-white">
 
         {/* Header */}
-<header className="absolute inset-x-0 top-0 z-50">
+<header className="absolute inset-x-0 top-0 z-50 w-1/2"> {/* TODO: w-1/2 enables the user to click on the AccountCenter in /launch-draw, fix with a proper solution */}
         <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
         <Link href="/" className="-m-1.5 p-1.5">
                         <div className="flex lg:flex-1 items-center">

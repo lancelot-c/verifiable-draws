@@ -135,7 +135,7 @@ const featuresCool = [
     {
         name: 'Decentralized frontend.',
         description:
-            'The draw details are gathered in a single html file that is stored on IPFS and is accessible at verify.win/<IPFS-CID>. When the draw occurs, the webpage automatically retrieve the winners from the smart contract and display them to the user.',
+            'The draw details are gathered in a single html file which is stored on our private IPFS gateway at verify.win/<IPFS-CID>. When the draw occurs, the webpage automatically retrieve the winners from the smart contract and display them to the user.',
         icon: ShieldCheckIcon,
     },
     {
@@ -228,8 +228,8 @@ const tiers = [
             { included: true, text: 'No wallet required' },
             { included: true, text: 'Up to 10,000 participants' },
             { included: true, text: 'Up to 100 winners' },
-            { included: true, text: 'Deployed on Arbitrum Sepolia testnet' },
-            { included: true, text: 'Accessible on our IPFS gateway verify.win' },
+            { included: true, text: 'Deploy on Arbitrum Sepolia testnet' },
+            { included: true, text: 'Access on our IPFS gateway verify.win' },
         ],
         mostPopular: false,
         cta: 'Launch draw',
@@ -238,18 +238,18 @@ const tiers = [
         name: 'Startup',
         id: 'tier-pro',
         href: '/launch-draw',
-        price: '$19',
-        description: 'Deploy on the open web: trustless, censorship resistant, and free of centralized gatekeepers.',
+        price: `$${ process.env.NEXT_PUBLIC_DRAW_USD_PRICE }`,
+        description: 'Deploy on the open web: trustless, censorship resistant, tamper-proof and verifiable.',
         features: [
             { included: true, text: 'Up to 1,000,000 participants' },
             { included: true, text: 'Up to 500 winners' },
-            { included: true, text: 'Deployed on Arbitrum One mainnet' },
-            { included: true, text: 'Accessible on our IPFS gateway verify.win' },
-            { included: true, text: 'Accessible on all public IPFS gateways' },
+            { included: true, text: 'Deploy on Arbitrum One mainnet' },
+            { included: true, text: 'Access on our IPFS gateway verify.win' },
+            { included: true, text: 'Publish on the public IPFS network' },
             { included: true, text: 'Support on our Discord' },
         ],
         mostPopular: true,
-        cta: 'Coming soon',
+        cta: 'Launch draw',
     },
     {
         name: 'Enterprise',
@@ -262,8 +262,8 @@ const tiers = [
             { included: true, text: 'Unlimited participants' },
             { included: true, text: 'Unlimited winners' },
             { included: true, text: 'Deployed on Arbitrum One mainnet' },
-            { included: true, text: 'Accessible on our IPFS gateway verify.win' },
-            { included: true, text: 'Accessible on all public IPFS gateways' },
+            { included: true, text: 'Access on our IPFS gateway verify.win' },
+            { included: true, text: 'Publish on the public IPFS network' },
             { included: true, text: 'White-labelling, bring your own template' },
             { included: true, text: 'API access' },
             { included: true, text: '24/7 priority support' },
@@ -1014,7 +1014,7 @@ export default function Example() {
                 aria-describedby={tier.id}
                 className={classNames(
                   tier.mostPopular
-                    ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 pointer-events-none mb-8'
+                    ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 mb-8'
                     : 'text-indigo-600 ring-1 ring-inset ring-indigo-200 hover:ring-indigo-300',
                   'mt-8 block rounded-md py-2 px-3 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
                 )}
