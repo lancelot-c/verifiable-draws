@@ -318,12 +318,26 @@
 
     <script type="module">
 
-        const url = window.location.href;
+        const url = window.location.href.replace('#', ''); // Remove the "#" which appears when opening the "Winners verifications" modal
+        
+        const isPrivateGateway = url.includes("verify.win"); // On our private IPFS gateway the url is https://www.verify.win/<CID>
+        const isPublicGateway = url.endsWith(".html"); // On public IPFS gateways the url is https://ipfs.io/ipfs/<CID>/verifiable-draw.html
+        const isDevMode = url.includes("?cid="); // In dev mode the url is http://localhost:3000/ipfs?cid=<CID>
+        let cid = 'undefined';
 
-        // In test mode the url is http://localhost:3000/ipfs?cid=XXX whereas in production the url is https://www.verify.win/XXX
-        const isTestMode = url.includes("?cid=");
-        const segments = isTestMode ? url.split("=") : url.split("/"); // ?fbclid=PAAabGKid7j7Nz_P6F5_M6JQkvD05JmT3XqZiZVpxODq-fLit68qwc2FeAdXA%23
-        let cid = segments[segments.length - 1].replace('#', '');
+        if (isPrivateGateway) {
+            const segments = url.split("/");
+            cid = segments[segments.length - 1];
+        } else if (isPublicGateway) {
+            const segments = url.split("/");
+            cid = segments[segments.length - 2];
+        } else if (isDevMode) {
+            const segments = url.split("=");
+            cid = segments[segments.length - 1];
+        } else {
+            console.error("Can't detect CID");
+        }
+
         const network = '{{ network }}';
         const contractAddress = '{{ contractAddress }}';
         const drawParticipants = [{{ drawParticipants }}];
