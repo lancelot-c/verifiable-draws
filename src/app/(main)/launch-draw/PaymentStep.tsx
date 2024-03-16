@@ -136,26 +136,13 @@ export default function PaymentStep(
 
             const contractInstance = new Contract(contractAddress, contractAbi, signer);
 
-            // const tx = await signer.sendTransaction({
-            //     to: contractAddress,
-            //     value: weiAmount, // The transaction value in wei ( 1 ETH = 10^18 wei )
-            //     data: encodedFunction
-            // });
-            // console.log(tx);
-
 
             const options = { value: ethers.parseEther(ethAmount.toFixed(18).toString()) }
+
+            console.log(`topUp address ${account.address} with ${options.value.toString()} wei\n`);
+
             const unsignedTx = await contractInstance.topUp(`${account.address}`, options);
-            // console.log('Transaction created');
-
-            // const txResponse = await signer.sendTransaction(unsignedTx);
-            // console.log(`Transaction sent: ${txResponse.hash}`);
-
-            // wait for block
-            // await txResponse.wait(1);
-            // console.log(
-            //     `Proposal has been mined at blocknumber: ${txResponse.blockNumber}, transaction hash: ${txResponse.hash}`
-            // );
+            
 
             deploy(true, (account as Account).address);
         }

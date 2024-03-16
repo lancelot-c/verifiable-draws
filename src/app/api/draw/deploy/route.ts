@@ -287,7 +287,6 @@ async function pinInKV(cid: string, content: string) {
 }
 
 async function publishOnSmartContract(owner: string, cid: string, scheduledAt: number, nbParticipants: number, nbWinners: number) {
-    console.log(`Publish draw ${cid} on smart contract ${contractAddress}, scheduled at ${scheduledAt}\n`);
 
     // const jsonData = await fsPromises.readFile(filePath);
     // const abi = JSON.parse(jsonData.toString()).abi;
@@ -310,6 +309,8 @@ async function publishOnSmartContract(owner: string, cid: string, scheduledAt: n
 
     const ethAmount = Number(process.env.NEXT_PUBLIC_DRAW_USD_PRICE) / ethPrice;
     const price = ethers.parseEther(ethAmount.toFixed(18).toString());
+
+    console.log(`deployDraw ${cid} with price ${price} on smart contract ${contractAddress}\n`);
 
     try {
         await contract.deployDraw(owner, cid, scheduledAt, nbParticipants, nbWinners, price
