@@ -50,7 +50,7 @@ export async function GET(request: Request) {
         console.log(`No cache in KV store. Retrieving winners from the smart contract.`)
         // const providerBaseURL = (network === 'polygon-mainnet') ? process.env.MAINNET_API_URL : process.env.TESTNET_API_URL;
         // const providerKey = (network === 'polygon-mainnet') ? process.env.MAINNET_API_KEY : process.env.TESTNET_API_KEY;
-        const providerURL = (mainnet && !testMode) ? "https://arbiscan.io" : "https://sepolia.arbiscan.io";
+        const providerURL = ((mainnet && !testMode) ? process.env.NEXT_PUBLIC_MAINNET_RPC : process.env.NEXT_PUBLIC_TESTNET_RPC) as string;
 
         const jsonRpcProvider = new ethers.JsonRpcProvider(providerURL)
         const wallet = new ethers.Wallet(process.env.WALLET_PRIVATE_KEY, jsonRpcProvider);
