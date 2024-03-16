@@ -299,7 +299,7 @@ async function publishOnSmartContract(owner: string, cid: string, scheduledAt: n
 
     // await setOptimalGas();
 
-    const baseUrl = process.env.VERCEL_URL ? process.env.VERCEL_URL : 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : 'http://localhost:3000'
     const ethPrice = await fetch(`${baseUrl}/api/payment/eth-usd-price`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },

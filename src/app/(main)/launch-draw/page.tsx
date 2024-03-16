@@ -11,7 +11,7 @@ import PaymentStep from './PaymentStep'
 
 
 
-const websiteBasePaths = (process.env.NEXT_PUBLIC_APP_ENV === 'test' && !process.env.VERCEL_URL) ? ['http://localhost:3000/ipfs?cid='] : ['http://verify.win/']
+const basePaths = (process.env.NEXT_PUBLIC_APP_ENV === 'test' && !process.env.NEXT_PUBLIC_VERCEL_URL) ? ['http://localhost:3000/ipfs?cid='] : ['http://verify.win/']
 
 
 const steps = [
@@ -247,7 +247,7 @@ export default function Page() {
 
                 if (data.response.cid) {
                     setCid(data.response.cid);
-                    setDrawLinks(websiteBasePaths.map(basePath => `${basePath}${data.response.cid}`))
+                    setDrawLinks(basePaths.map(basePath => `${basePath}${data.response.cid}`))
                 }
 
                 if (data.error) {
