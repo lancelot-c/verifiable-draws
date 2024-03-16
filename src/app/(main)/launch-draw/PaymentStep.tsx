@@ -136,14 +136,12 @@ export default function PaymentStep(
 
             const contractInstance = new Contract(contractAddress, contractAbi, signer);
 
-
             const options = { value: ethers.parseEther(ethAmount.toFixed(18).toString()) }
 
             console.log(`topUp address ${account.address} with ${options.value.toString()} wei\n`);
 
             const unsignedTx = await contractInstance.topUp(`${account.address}`, options);
             
-
             deploy(true, (account as Account).address);
         }
 
