@@ -11,7 +11,7 @@ import PaymentStep from './PaymentStep'
 
 
 
-const websiteBasePaths = (process.env.NEXT_PUBLIC_APP_ENV === 'test') ? ['http://localhost:3000/ipfs?cid='] : ['http://verify.win/']
+const websiteBasePaths = (process.env.NEXT_PUBLIC_APP_ENV === 'test' && !process.env.VERCEL_URL) ? ['http://localhost:3000/ipfs?cid='] : ['http://verify.win/']
 
 
 const steps = [
