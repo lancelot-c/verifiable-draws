@@ -37,5 +37,4 @@ const arbIcon = `
 </g>
 </svg>
 `
-
 export default arbIcon;
