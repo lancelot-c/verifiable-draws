@@ -64,7 +64,7 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
     mapping(uint32 => string) public cids; // Draw index => Draw CID
     mapping(string => Draw) public draws; // Draw CID => Draw object
     string[] public queue; // Draws scheduled for later
-    mapping(address => uint256) public balances; // Account => ETH balance
+    mapping(address => uint256) public userBalances; // Account => ETH balance
     
     uint32 private entropyNeededPerWinner = 8; // Retrieving 8 bytes (64 bits) of entropy for each winner is enough to have an infinitely small scaling bias
 
@@ -199,10 +199,10 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
         }
 
         if (_owner != owner()) {
-            if (balances[_owner] < price) {
+            if (userBalances[_owner] < price) {
                 revert NotEnoughFunds(_owner);
             }
-            balances[_owner] -= price;
+            userBalances[_owner] -= price;
         }
 
         uint64 publishedAt = uint64(block.timestamp);
@@ -462,13 +462,14 @@ contract VerifiableDraws is AutomationCompatibleInterface, VRFConsumerBaseV2, Co
 
     function topUp(address _recipient) external payable {
         require(msg.value > 0, "Empty top up");
-        balances[_recipient] += msg.value;
+        userBalances[_recipient] += msg.value;
     }
 
-    function withdraw(address _recipient) external onlyOwner {
+    function withdraw(uint256 amount, address _recipient) external onlyOwner {
         uint256 ethBalance = address(this).balance;
         require(ethBalance > 0, "Nothing to withdraw");
-        payable(_recipient).transfer(ethBalance);
+        require(ethBalance >= amount, "Amount too high");
+        payable(_recipient).transfer(amount);
     }
 
     receive() external payable { }
