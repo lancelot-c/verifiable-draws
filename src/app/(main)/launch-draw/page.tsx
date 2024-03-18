@@ -5,6 +5,7 @@ import Link from 'next/link'
 import React from "react";
 import { CheckIcon, CheckCircleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import PaymentStep from './PaymentStep'
+import { numberWithCommas, classNames } from './../../../utils/misc'
 
 
 
@@ -122,19 +123,7 @@ const drawNbWinnersPlaceholder = 1;
 
 export default function Page() {
 
-    const dt_min = new Date();
-
-    const safetyCushionMin = (process.env.NEXT_PUBLIC_APP_ENV === 'test') ? 0 : 0;
-    const safetyCushionDefault = (process.env.NEXT_PUBLIC_APP_ENV === 'test') ? 0 : 10;
-    dt_min.setMinutes(dt_min.getMinutes() - dt_min.getTimezoneOffset() + safetyCushionMin);
-
-    const dt_default = new Date(dt_min);
-    // dt_default.setMinutes(dt_min.getMinutes() - dt_min.getTimezoneOffset() + safetyCushionDefault);
-
-    const scheduledAtMinValue = dt_min.toISOString().slice(0, 16);
-    const scheduledAtDefaultValue = dt_default.toISOString().slice(0, 16);
-
-    const { register, trigger, getValues, formState: { errors, isValid } } = useForm<FormInputs>({
+    const { register, trigger, getValues, setValue, formState: { errors, isValid } } = useForm<FormInputs>({
         defaultValues: {
             step1: {
                 name: '',
@@ -143,12 +132,12 @@ export default function Page() {
                 nbWinners: drawNbWinnersPlaceholder
             },
             step2: {
-                scheduledAt: scheduledAtDefaultValue
+                scheduledAt: undefined
             }
         }
     });
 
-    const showErrorsOnBlur = true
+    const showErrorsOnChange = true
     type StepNumber = 1 | 2 | 3 | 4
     const startAtStep = 1
     const paymentStep = 3
@@ -161,6 +150,22 @@ export default function Page() {
     const [deployInProgress, setDeployInProgress] = useState<boolean>(false);
     const [drawLinks, setDrawLinks] = useState<string[]>([]);
     const [ethPrice, setEthPrice] = useState<number>(0);
+
+
+    useEffect(() => {
+        if (currentStep !== 2) {
+            return;
+        }
+
+        let ignore = false;
+        setValue("step2.scheduledAt", getCurrentDateValue());
+
+        return () => {
+            ignore = true;
+        };
+
+    }, [currentStep])
+
 
     useEffect(() => {
         if (currentStep !== paymentStep || ethPrice > 0) {
@@ -258,7 +263,7 @@ export default function Page() {
     }
 
     function validateScheduledAtFn() {
-        return getTimestampFromIso(getValues("step2.scheduledAt")) >= getTimestampFromIso(scheduledAtMinValue)
+        return getTimestampFromIso(getValues("step2.scheduledAt")) >= (Date.now() - 60000) // current time minus one minut
     }
 
     // get timestamp in ms from partial iso string
@@ -279,6 +284,27 @@ export default function Page() {
 
     function shortenUrl(url: string) {
         return url.replace('http://', '').replace('https://', '').replace('www.', '');
+    }
+
+    function getNbParticipants(value?: string): number {
+        if (!value) {
+            value = getValues("step1.participants") as string;
+        }
+        return value.split('\n').filter(n => n).length;
+    }
+
+    function validateMaxNbParticipants(value: string): boolean {
+        return getNbParticipants(value) <= (process.env.NEXT_PUBLIC_MAINNET_MAX_PARTICIPANTS as unknown as number);
+    }
+
+    function areWinnersLessOrEqualThanParticipants(): boolean {
+        return getValues("step1.nbWinners") <= getNbParticipants();
+    }
+
+    function getCurrentDateValue(): string {
+        const d = new Date();
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().slice(0, 16);
     }
 
     return (
@@ -328,7 +354,7 @@ export default function Page() {
                                     href={step.href}
                                     onClick={goToStep(index + 1 as StepNumber)}
                                     className={`group flex flex-col border-l-4 border-indigo-600 py-2 pl-4 hover:border-indigo-800 md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4
-                                    ${isValid && selectedStep !== shareStep ? '' : 'pointer-events-none'}`}
+                                    ${selectedStep === shareStep ? 'pointer-events-none' : ''}`}
                                 >
                                     <span className="text-sm font-medium text-indigo-600 group-hover:text-indigo-800">Step {index + 1}</span>
                                     <span className="text-sm font-medium">{step.name}</span>
@@ -385,15 +411,24 @@ export default function Page() {
                                             id="name"
                                             placeholder={drawNamePlaceholder}
                                             className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6
-                                            ${errors.step1?.name && showErrorsOnBlur ? 'ring-red-600' : 'focus:ring-indigo-600'}`}
+                                            ${errors.step1?.name && showErrorsOnChange ? 'ring-red-600 focus:ring-red-600' : 'focus:ring-indigo-600'}`}
                                             {...register("step1.name", {
-                                                required: 'Name is required',
-                                                onBlur: () => { trigger("step1.name"); },
+                                                required: 'This field is required',
+                                                onChange: () => { trigger("step1.name"); },
                                             })}
                                         />
                                     </div>
                                 </div>
-                                <p className="mt-3 text-sm leading-6 text-gray-600">This will be the title of the page we will create for your draw.</p>
+                                <p className={classNames(
+                                    'mt-3 text-sm leading-6',
+                                    errors.step1?.name ? 'text-red-600 font-medium' : 'text-gray-600'
+                                )}>
+                                    { errors.step1?.name ? (
+                                        <span>{errors.step1?.name.message}</span>
+                                    ) : (
+                                        <span>This will be the title of the page we will create for your draw.</span>
+                                    ) }
+                                </p>
                             </div>
 
 
@@ -408,21 +443,29 @@ export default function Page() {
                                         id="rules"
                                         placeholder={drawRulesPlaceholder}
                                         className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6
-                                        ${errors.step1?.rules && showErrorsOnBlur ? 'ring-red-600' : 'focus:ring-indigo-600'}`}
+                                        ${errors.step1?.rules && showErrorsOnChange ? 'ring-red-600 focus:ring-red-600' : 'focus:ring-indigo-600'}`}
                                         {...register("step1.rules", {
-                                            required: 'Rules are required',
-                                            onBlur: () => { trigger("step1.rules"); },
+                                            onChange: () => { trigger("step1.rules"); },
                                         })}
                                     />
                                 </div>
-                                <p className="mt-3 text-sm leading-6 text-gray-600">Explain what people needed to do in order to participate in this draw.</p>
+                                <p className={classNames(
+                                    'mt-3 text-sm leading-6',
+                                    errors.step1?.rules ? 'text-red-600 font-medium' : 'text-gray-600'
+                                )}>
+                                    { errors.step1?.rules ? (
+                                        <span>{errors.step1?.rules.message}</span>
+                                    ) : (
+                                        <span>Explain what people needed to do in order to participate in this draw.</span>
+                                    ) }
+                                </p>
                             </div>
 
 
 
                             <div className="col-span-full">
                                 <label htmlFor="participants" className="block text-sm font-medium leading-6 text-gray-900">
-                                    List of participants
+                                    Participants ({ getNbParticipants() } detected)
                                 </label>
                                 <div className="mt-2">
                                     <textarea
@@ -430,16 +473,39 @@ export default function Page() {
                                         id="participants"
                                         placeholder={drawParticipantsPlaceholder}
                                         className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6
-                                        ${errors.step1?.participants && showErrorsOnBlur ? 'ring-red-600' : 'focus:ring-indigo-600'}`}
+                                        ${errors.step1?.participants && showErrorsOnChange ? 'ring-red-600 focus:ring-red-600' : 'focus:ring-indigo-600'}`}
                                         {...register("step1.participants", {
-                                            required: 'List of participants is required',
-                                            onBlur: () => { trigger("step1.participants"); },
+                                            required: 'This field is required',
+                                            validate: {
+                                                max: validateMaxNbParticipants,
+                                                lessThanWinners: areWinnersLessOrEqualThanParticipants
+                                            },
+                                            onChange: () => { trigger(["step1.participants", "step1.nbWinners"]); },
                                         })}
                                     />
                                 </div>
-                                <p className="mt-3 text-sm leading-6 text-gray-600">
-                                    Type one username per line.<br />
-                                    If you want some participants to have twice more chance of winning, just enter their usernames twice in two separate lines.
+                                <p className={classNames(
+                                    'mt-3 text-sm leading-6',
+                                    errors.step1?.participants ? 'text-red-600 font-medium' : 'text-gray-600'
+                                )}>
+                                    { errors.step1?.participants ? (
+                                        <span>
+                                            {   
+                                                errors.step1?.participants.message ? errors.step1?.participants.message
+                                                : (
+                                                    <>
+                                                        <>{(errors.step1?.participants.type === 'max') && (`Maximum is ${numberWithCommas(process.env.NEXT_PUBLIC_MAINNET_MAX_PARTICIPANTS as unknown as number)}`)}</>
+                                                        <>{(errors.step1?.participants.type === 'lessThanWinners') && (`Number of participants should be greater or equal than number of winners`)}</>
+                                                    </>
+                                                )
+                                            }
+                                        </span>
+                                    ) : (
+                                        <span>
+                                            Type one username per line.<br />
+                                            If you want some participants to have twice more chance of winning, just enter their usernames twice in two separate lines.
+                                        </span>
+                                    ) }
                                 </p>
                             </div>
 
@@ -451,17 +517,39 @@ export default function Page() {
                                     <input
                                         type="number"
                                         id="nbWinners"
-                                        min="0"
+                                        min="1"
+                                        max={process.env.NEXT_PUBLIC_MAINNET_MAX_WINNERS as unknown as number}
                                         placeholder={drawNbWinnersPlaceholder.toString()}
                                         className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6
-                                        ${errors.step1?.nbWinners && showErrorsOnBlur ? 'ring-red-600' : 'focus:ring-indigo-600'}`}
+                                        ${errors.step1?.nbWinners && showErrorsOnChange ? 'ring-red-600 focus:ring-red-600' : 'focus:ring-indigo-600'}`}
                                         {...register("step1.nbWinners", {
-                                            required: 'Number of participants to draw is required',
-                                            onBlur: () => { trigger("step1.nbWinners"); },
+                                            required: 'This field is required',
+                                            min: { value: 1, message: 'Minimum is 1' },
+                                            max: { value: process.env.NEXT_PUBLIC_MAINNET_MAX_WINNERS as unknown as number, message: `Maximum is ${numberWithCommas(process.env.NEXT_PUBLIC_MAINNET_MAX_WINNERS as unknown as number)}` },
+                                            validate: {
+                                                lessThanWinners: areWinnersLessOrEqualThanParticipants
+                                            },
+                                            onChange: () => { trigger(["step1.participants", "step1.nbWinners"]); },
                                         })}
                                     />
                                 </div>
-                                <p className="mt-3 text-sm leading-6 text-gray-600">This is the number of participants that the algorithm will randomly select.</p>
+                                <p className={classNames(
+                                    'mt-3 text-sm leading-6',
+                                    errors.step1?.nbWinners ? 'text-red-600 font-medium' : 'text-gray-600'
+                                )}>
+                                    { errors.step1?.nbWinners ? (
+                                        <span>
+                                            {   
+                                                errors.step1?.nbWinners.message ? errors.step1?.nbWinners.message
+                                                : (
+                                                    <>{(errors.step1?.nbWinners.type === 'lessThanWinners') && (`Number of winners should be less or equal than number of participants`)}</>
+                                                )
+                                            }
+                                        </span>
+                                    ) : (
+                                        <span>This is the number of participants that the algorithm will randomly select.</span>
+                                    ) }
+                                </p>
                             </div>
 
                         </div>
@@ -481,16 +569,33 @@ export default function Page() {
                                     <input
                                         type="datetime-local"
                                         id="scheduledAt"
-                                        min={scheduledAtMinValue}
+                                        min={Date.now()}
                                         className={`block m-auto rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6
-                                        ${errors.step2?.scheduledAt && showErrorsOnBlur ? 'ring-red-600' : 'focus:ring-indigo-600'}`}
+                                        ${errors.step2?.scheduledAt && showErrorsOnChange ? 'ring-red-600 focus:ring-red-600' : 'focus:ring-indigo-600'}`}
                                         {...register("step2.scheduledAt", {
-                                            required: 'Scheduled date and time is required',
-                                            validate: validateScheduledAtFn,
-                                            onBlur: () => { trigger("step2.scheduledAt"); },
+                                            required: 'This field is required',
+                                            validate: {
+                                                scheduledAt: validateScheduledAtFn
+                                            },
+                                            onChange: () => { trigger("step2.scheduledAt"); },
                                         })}
                                     ></input>
                                 </div>
+                                <p className={classNames(
+                                    'mt-3 text-sm leading-6',
+                                    errors.step2?.scheduledAt ? 'text-red-600 font-medium' : 'text-gray-600'
+                                )}>
+                                    { errors.step2?.scheduledAt && (
+                                        <>
+                                            {   
+                                                errors.step2?.scheduledAt.message ? errors.step2?.scheduledAt.message
+                                                : (
+                                                    <>{(errors.step2?.scheduledAt.type === 'scheduledAt') && (`Date has passed`)}</>
+                                                )
+                                            }
+                                        </>
+                                    )}
+                                </p>
                             </div>
 
                             <div className="rounded-md bg-blue-50 p-4 mt-8">
@@ -500,7 +605,7 @@ export default function Page() {
                                     </div>
                                     <div className="ml-3 flex-1 md:flex md:justify-between">
                                         <p className="text-sm text-blue-700">
-                                            We recommend you to choose a date and time a few minutes in the future, so that the draw participants will be able to see the random draw in live on the blockchain when it happens.
+                                            We recommend you to choose a date and time a few minutes/hours in the future, so that the participants will be able to see the random draw in live on the blockchain when it happens.
                                         </p>
                                     </div>
                                 </div>

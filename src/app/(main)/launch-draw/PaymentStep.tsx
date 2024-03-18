@@ -157,7 +157,7 @@ export default function PaymentStep(
 
         let ignore = false;
 
-        const safetyNet = 0.01; // Pay 1% more to prevent the deployment from failing if the price of ETH fluctuates between the payment and the actual deployment
+        const safetyNet = 0.02; // Pay 1% more to prevent the deployment from failing if the price of ETH fluctuates between the payment and the actual deployment
         const tempEthAmount = (envDrawUsdPrice * (1 + safetyNet)) / ethPrice;
         const tempUsdAmount = tempEthAmount * ethPrice;
 

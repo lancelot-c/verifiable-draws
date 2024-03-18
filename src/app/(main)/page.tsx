@@ -24,6 +24,7 @@ import kimLogoImg from '/public/img/kim-kardashian.jpg'
 import fifaLogoImg from '/public/img/fifa-logo.png'
 import mcdonaldsLogoImg from '/public/img/McDonalds-logo.png'
 import bbcLogoImg from '/public/img/bbc-logo.webp'
+import { numberWithCommas, classNames } from './../../utils/misc'
 
 import {
     ScaleIcon,
@@ -226,8 +227,8 @@ const tiers = [
         description: 'Try the most secure random draw algorithm currently on the market for free.',
         features: [
             { included: true, text: 'No wallet required' },
-            { included: true, text: 'Up to 10,000 participants' },
-            { included: true, text: 'Up to 100 winners' },
+            { included: true, text: `Up to ${numberWithCommas(process.env.NEXT_PUBLIC_TESTNET_MAX_PARTICIPANTS as unknown as number)} participants` },
+            { included: true, text: `Up to ${numberWithCommas(process.env.NEXT_PUBLIC_TESTNET_MAX_WINNERS as unknown as number)} winners` },
             { included: true, text: 'Deploy on Arbitrum Sepolia testnet' },
             { included: true, text: 'Access on our IPFS gateway verify.win' },
         ],
@@ -241,8 +242,8 @@ const tiers = [
         price: `$${ process.env.NEXT_PUBLIC_DRAW_USD_PRICE }`,
         description: 'Deploy on the open web: trustless, censorship resistant, tamper-proof and verifiable.',
         features: [
-            { included: true, text: 'Up to 1,000,000 participants' },
-            { included: true, text: 'Up to 500 winners' },
+            { included: true, text: `Up to ${numberWithCommas(process.env.NEXT_PUBLIC_MAINNET_MAX_PARTICIPANTS as unknown as number)} participants` },
+            { included: true, text: `Up to ${numberWithCommas(process.env.NEXT_PUBLIC_MAINNET_MAX_WINNERS as unknown as number)} winners` },
             { included: true, text: 'Deploy on Arbitrum One mainnet' },
             { included: true, text: 'Access on our IPFS gateway verify.win' },
             { included: true, text: 'Publish on the public IPFS network' },
@@ -275,9 +276,7 @@ const tiers = [
 
 
 
-function classNames(...classes: string[]) {
-    return classes.filter(Boolean).join(' ')
-}
+
 
 
 export default function Example() {
