@@ -133,7 +133,7 @@ async function createDraw(
     // Generate draw file
     let [generatedCid, content] = await generateDrawFile(drawTitle, drawRules, drawParticipantsArray, drawNbParticipants, drawNbWinners, drawScheduledAt);
 
-    // Pin draw file on IPFS
+    // Pin draw file on IPFS for mainnet
     if (mainnet) {
 
         const tempFilepath = `/tmp/${generatedCid}.html`;
@@ -143,15 +143,12 @@ async function createDraw(
         generatedCid = ipfsCid;
 
         deleteFile(tempFilepath);
+
+    } else {
+
+        // Or pin in local db for testnet
+        await pinInKV(generatedCid, content);
     }
-    
-    await pinInKV(generatedCid, content);
-
-    // Rename draw file to match IPFS CID
-    // await renameFileToCid(drawFilepath, cid);
-
-    // Delete temp file
-    // deleteTmpDrawFile(drawFilepath);
 
     // Publish draw on smart contract
     await publishOnSmartContract(owner, generatedCid, drawScheduledAt, drawNbParticipants, drawNbWinners);
@@ -159,12 +156,6 @@ async function createDraw(
     return generatedCid
 
 }
-
-// async function renameFileToCid(oldPath: string, cid: string) {
-//     const newPath = path.join(process.cwd(), `/src/app/ipfs/${cid}.html`);
-//     console.log(`Rename ${oldPath} to ${newPath}`);
-//     return fsPromises.rename(oldPath, newPath);
-// }
 
 function deleteFile(filepath: string) {
     fs.unlink(filepath, (err) => {
