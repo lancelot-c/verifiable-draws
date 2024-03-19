@@ -184,7 +184,7 @@ async function generateDrawFile(drawTitle: string, drawRules: string, drawPartic
     const content = await fsPromises.readFile(templateFilepath, 'utf8');
 
     if (!drawRules) {
-        drawRules = `Draw ${numberWithCommas(drawNbWinners)} winners randomly out of the ${numberWithCommas(drawNbParticipants)} participants.`;
+        drawRules = `Draw ${numberWithCommas(drawNbWinners)} winner${drawNbWinners > 1 ? 's' : ''} randomly out of the ${numberWithCommas(drawNbParticipants)} participant${drawNbParticipants > 1 ? 's' : ''}.`;
     } 
 
     const drawParticipantsList = `'${drawParticipantsArray.join('\',\'')}'`;
