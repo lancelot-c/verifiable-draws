@@ -262,20 +262,6 @@ export default function Page() {
             });
     }
 
-    function validateScheduledAtFn() {
-        return getTimestampFromIso(getValues("step2.scheduledAt")) >= (Date.now() - 60000) // current time minus one minut
-    }
-
-    // get timestamp in ms from partial iso string
-    function getTimestampFromIso(iso: string) {
-        const isoStr = `${iso}:00.000Z`;
-        const date = new Date(isoStr);
-        const timestampWithOffset = date.getTime();
-        const offset = date.getTimezoneOffset() * 60 * 1000;
-        const timestampWithoutOffset = timestampWithOffset + offset;
-        return timestampWithoutOffset
-    }
-
     function copyDrawLinkToClipboard(link: string) {
         navigator.clipboard.writeText(link).then(() => { }, (err) => {
             console.error('Async: Could not copy text: ', err);
@@ -305,6 +291,25 @@ export default function Page() {
         const d = new Date();
         d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         return d.toISOString().slice(0, 16);
+    }
+
+    function getMinDateValue(): string {
+        const d = new Date(Date.now() - 60000);
+        return d.toISOString().slice(0, 16);
+    }
+
+    function validateScheduledAtFn() {
+        return getTimestampFromIso(getValues("step2.scheduledAt")) >= (Date.now() - 60000) // current time minus one minut
+    }
+
+    // get timestamp in ms from partial iso string
+    function getTimestampFromIso(iso: string) {
+        const isoStr = `${iso}:00.000Z`;
+        const date = new Date(isoStr);
+        const timestampWithOffset = date.getTime();
+        const offset = date.getTimezoneOffset() * 60 * 1000;
+        const timestampWithoutOffset = timestampWithOffset + offset;
+        return timestampWithoutOffset
     }
 
     return (
@@ -569,7 +574,7 @@ export default function Page() {
                                     <input
                                         type="datetime-local"
                                         id="scheduledAt"
-                                        min={Date.now()}
+                                        min={getMinDateValue()}
                                         className={`block m-auto rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6
                                         ${errors.step2?.scheduledAt && showErrorsOnChange ? 'ring-red-600 focus:ring-red-600' : 'focus:ring-indigo-600'}`}
                                         {...register("step2.scheduledAt", {
@@ -590,7 +595,7 @@ export default function Page() {
                                             {   
                                                 errors.step2?.scheduledAt.message ? errors.step2?.scheduledAt.message
                                                 : (
-                                                    <>{(errors.step2?.scheduledAt.type === 'scheduledAt') && (`Date has passed`)}</>
+                                                    <>{(errors.step2?.scheduledAt.type === 'scheduledAt') && (`Choose a date in the future`)}</>
                                                 )
                                             }
                                         </>
@@ -605,7 +610,8 @@ export default function Page() {
                                     </div>
                                     <div className="ml-3 flex-1 md:flex md:justify-between">
                                         <p className="text-sm text-blue-700">
-                                            We recommend you to choose a date and time a few minutes/hours in the future, so that the participants will be able to see the random draw in live on the blockchain when it happens.
+                                            To maximize <Link href="https://nakamoto.com/credible-neutrality/" rel="noopener" target="_blank" className="underline">credible neutrality</Link>, we recommend you to choose a date a few hours in the future, in order for you to share the link of the draw with the participants before the random draw happens. 
+                                            <span className="font-medium"> In this way, the participants will have the proof that you didn&apos;t know the result of the draw in advance.</span>
                                         </p>
                                     </div>
                                 </div>
