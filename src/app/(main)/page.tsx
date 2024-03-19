@@ -73,7 +73,7 @@ const features = [
     {
         name: 'GDPR compliant',
         description:
-            'No personal data is stored onchain as the list of participants is only held by us on our private IPFS gateway.',
+            'No personal data is stored onchain as the list of participants is only stored on IPFS and can be chosen to be accessible either through public, private, or dedicated gateways.',
         icon: GlobeEuropeAfricaIcon,
     },
 ]
@@ -262,9 +262,10 @@ const tiers = [
             // { included: true, text: 'Unlimited draws' },
             { included: true, text: 'Unlimited participants' },
             { included: true, text: 'Unlimited winners' },
-            { included: true, text: 'Deployed on Arbitrum One mainnet' },
+            { included: true, text: 'Deploy on Arbitrum One mainnet' },
             { included: true, text: 'Access on our IPFS gateway verify.win' },
             { included: true, text: 'Publish on the public IPFS network' },
+            { included: true, text: 'Dedicated gateway for enhanced privacy' },
             { included: true, text: 'White-labelling, bring your own template' },
             { included: true, text: 'API access' },
             { included: true, text: '24/7 priority support' },
