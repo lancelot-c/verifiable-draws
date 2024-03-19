@@ -1,3 +1,4 @@
+import fetch from 'node-fetch';
 import { kv } from "@vercel/kv";
  
 export async function GET(request: Request) {
@@ -6,7 +7,29 @@ export async function GET(request: Request) {
     const cid = searchParams.get('cid')
     console.log(`Access draw ${cid}`);
 
-    const fileData: string | null = await kv.get(`content_${cid}`);
+    const pinataUrl = `https://${process.env.PINATA_GATEWAY_DOMAIN}/ipfs/${cid}/verifiable-draw.html`
+    let fileData: string | null = null;
+
+    // Try fetching from Pinata first
+    try {
+        const response = await fetch(pinataUrl); // See doc here: https://www.npmjs.com/package/node-fetch#plain-text-or-html
+
+        // Found on Pinata
+        if (response.ok) {
+            fileData = await response.text();
+        } else {
+            // Client or server error (4XX or 5XX error), do nothing
+        }
+        
+    } catch (error) {
+        // Network error, should never happen
+        console.error(`Couldn't reach the pinata gateway`, error);
+    }
+
+    // If nothing was fetched from Pinata try fetching from KV
+    if (!fileData) {
+        fileData = await kv.get(`content_${cid}`);
+    }
 
     const dataHeaders = {
         status: (fileData) ? 200 : 404,
