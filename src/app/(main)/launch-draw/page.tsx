@@ -700,9 +700,10 @@ export default function Page() {
                                             </div>
                                             <div className="ml-3">
                                                 <p className="text-sm font-medium text-red-800">
-                                                    {deployError}<br />
+                                                    {deployError}
+                                                    {/* <br />
                                                     {(cid) ? 'Please send us the above IPFS link' : 'Please contact us'} on Discord so that we can investigate what went wrong.<br />
-                                                    We apologize for the inconvenience.
+                                                    We apologize for the inconvenience. */}
                                                 </p>
                                             </div>
                                         </div>

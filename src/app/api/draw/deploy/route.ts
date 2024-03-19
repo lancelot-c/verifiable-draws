@@ -10,6 +10,7 @@ import { unixfs } from "@helia/unixfs"
 import { BlackHoleBlockstore } from "blockstore-core/black-hole"
 import { fixedSize } from "ipfs-unixfs-importer/chunker"
 import { balanced } from "ipfs-unixfs-importer/layout"
+import { numberWithCommas } from './../../../../utils/misc'
 const pinataSDK = require('@pinata/sdk');
 import contractAbi from '../../../../assets/abi'
 // const filePath = path.join(process.cwd(), `src/assets/${process.env.CONTRACT_NAME}.json`);
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
         const drawNbWinners: number = body.drawNbWinners;
         const drawScheduledAt: number = body.drawScheduledAt;
         const mainnet: boolean = body.mainnet;
-        const owner: string = (mainnet) ? body.owner : process.env.WALLET_PUBLIC_KEY;
+        const owner: string = (mainnet) ? body.owner : process.env.WALLET_PUBLIC_KEY; // We take ownership of the draw on testnet
 
         response.cid = await createDraw(owner, drawTitle, drawRules, drawParticipants, drawNbWinners, drawScheduledAt, mainnet);
 
@@ -111,13 +112,23 @@ async function createDraw(
 
     if (!drawTitle || !drawParticipants || !drawNbWinners || !drawScheduledAt) {
         throw new Error('You need to specify all draw parameters.');
+    }    
+
+    const drawParticipantsArray = drawParticipants.split('\n').filter(n => n);
+    const drawNbParticipants = drawParticipantsArray.length;
+
+    const maxParticipantsAllowed = (mainnet ? process.env.NEXT_PUBLIC_MAINNET_MAX_PARTICIPANTS : process.env.NEXT_PUBLIC_TESTNET_MAX_PARTICIPANTS) as unknown as number;
+    const maxWinnersAllowed = (mainnet ? process.env.NEXT_PUBLIC_MAINNET_MAX_WINNERS : process.env.NEXT_PUBLIC_TESTNET_MAX_WINNERS) as unknown as number;
+
+    if (drawNbParticipants > maxParticipantsAllowed) {
+        throw new Error(`Your draw has ${drawNbParticipants} participants whereas the maximum allowed is ${maxParticipantsAllowed} on ${mainnet ? 'mainnet' : 'testnet'}.`);
+    }
+
+    if (drawNbWinners > maxWinnersAllowed) {
+        throw new Error(`Your draw has ${drawNbWinners} winners whereas the maximum allowed is ${maxWinnersAllowed} on ${mainnet ? 'mainnet' : 'testnet'}.`);
     }
 
     await setEthersParams(mainnet)
-
-    // Compute entropy needed
-    const drawParticipantsArray = drawParticipants.split('\n').filter(n => n);
-    const drawNbParticipants = drawParticipantsArray.length;
 
     // Generate draw file
     let [generatedCid, content] = await generateDrawFile(drawTitle, drawRules, drawParticipantsArray, drawNbParticipants, drawNbWinners, drawScheduledAt);
@@ -171,6 +182,10 @@ async function generateDrawFile(drawTitle: string, drawRules: string, drawPartic
     console.log(`templateFilepath = ${templateFilepath}`);
 
     const content = await fsPromises.readFile(templateFilepath, 'utf8');
+
+    if (!drawRules) {
+        drawRules = `Draw ${numberWithCommas(drawNbWinners)} winners randomly out of the ${numberWithCommas(drawNbParticipants)} participants.`;
+    } 
 
     const drawParticipantsList = `'${drawParticipantsArray.join('\',\'')}'`;
 

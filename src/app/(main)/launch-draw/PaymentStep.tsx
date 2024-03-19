@@ -157,7 +157,7 @@ export default function PaymentStep(
 
         let ignore = false;
 
-        const safetyNet = 0.02; // Pay 1% more to prevent the deployment from failing if the price of ETH fluctuates between the payment and the actual deployment
+        const safetyNet = 0.02; // Pay 2% more to prevent the deployment from failing if the price of ETH fluctuates between the payment and the actual deployment
         const tempEthAmount = (envDrawUsdPrice * (1 + safetyNet)) / ethPrice;
         const tempUsdAmount = tempEthAmount * ethPrice;
 
@@ -211,7 +211,7 @@ export default function PaymentStep(
                 ))}
             </ul>
 
-            <p className="text-center pt-4 text-gray-600 flex">
+            <div className="text-center pt-4 text-gray-600 flex">
                 {/* Tooltip */}
                 {/* <div className="group flex relative">
                     <InformationCircleIcon data-tooltip-target="tooltip-default" className="h-6 w-5 text-gray-600" aria-hidden="true" />
@@ -228,7 +228,7 @@ export default function PaymentStep(
                 </div> */}
                 <div className="ml-2">One-time fee: {ethAmount.toFixed(5)} ETH</div>
                 <div className="ml-8">(${usdAmount.toFixed(2)})</div>
-            </p>
+            </div>
 
             <div className="flex flex-col">
                 {
