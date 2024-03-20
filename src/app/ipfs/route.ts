@@ -12,14 +12,15 @@ export async function GET(request: Request) {
     const cid = searchParams.get('cid')
     console.log(`Access draw ${cid}`);
 
-    const pinataUrl = `https://${process.env.PINATA_GATEWAY_DOMAIN}/ipfs/${cid}/verifiable-draw.html`
+    // const pinataUrl = `https://${process.env.PINATA_GATEWAY_DOMAIN}/ipfs/${cid}/verifiable-draw.html`
+    const ipfsUrl = `https://ipfs.io/ipfs/${cid}/verifiable-draw.html`;
     let fileData: string | null = null;
 
-    // Try fetching from Pinata first
+    // Try fetching from IPFS first
     try {
-        const response = await fetch(pinataUrl); // See doc here: https://www.npmjs.com/package/node-fetch#plain-text-or-html
+        const response = await fetch(ipfsUrl); // See doc here: https://www.npmjs.com/package/node-fetch#plain-text-or-html
 
-        // Found on Pinata
+        // Found on IPFS
         if (response.ok) {
             fileData = await response.text();
         } else {
@@ -28,10 +29,10 @@ export async function GET(request: Request) {
         
     } catch (error) {
         // Network error, should never happen
-        console.error(`Couldn't reach the pinata gateway`, error);
+        console.error(`Couldn't reach the IPFS gateway`, error);
     }
 
-    // If nothing was fetched from Pinata try fetching from KV
+    // If nothing was fetched from IPFS try fetching from KV store
     if (!fileData) {
         fileData = (await redis.smembers(`content_${cid}`))[0];
     }
