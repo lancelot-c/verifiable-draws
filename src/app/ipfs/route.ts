@@ -1,5 +1,10 @@
 import fetch from 'node-fetch';
-import { kv } from "@vercel/kv";
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+    url: process.env.REDIS_URL as string,
+    token: process.env.REDIS_TOKEN as string
+});
  
 export async function GET(request: Request) {
 
@@ -28,7 +33,7 @@ export async function GET(request: Request) {
 
     // If nothing was fetched from Pinata try fetching from KV
     if (!fileData) {
-        fileData = await kv.get(`content_${cid}`);
+        fileData = (await redis.smembers(`content_${cid}`))[0];
     }
 
     const dataHeaders = {

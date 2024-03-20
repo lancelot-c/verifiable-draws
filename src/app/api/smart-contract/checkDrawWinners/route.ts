@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
-import fsPromises from 'fs/promises';
-import path from 'path'
 import { ethers } from 'ethers';
-import { kv } from "@vercel/kv";
 import contractAbi from '../../../../assets/abi'
+// import { Redis } from '@upstash/redis'
+
+// const redis = new Redis({
+//     url: process.env.REDIS_URL as string,
+//     token: process.env.REDIS_TOKEN as string
+// });
 
 const testMode = (process.env.NEXT_PUBLIC_APP_ENV != "prod");
 
@@ -18,15 +21,6 @@ export async function GET(request: Request) {
         throw new Error("'network', 'contractAddress', and 'cid' parameters are required.")
     }
 
-    // if (network !== "polygon-mainnet" && network !== "polygon-mumbai") {
-    //     throw new Error(`Network ${network} is not supported.`)
-    // }
-
-    // const expectedContractAddress = ((network === 'polygon-mainnet') ? process.env.MAINNET_CONTRACT_ADDRESS : process.env.TESTNET_CONTRACT_ADDRESS) as string;
-    // if (contractAddress !== expectedContractAddress) {
-    //     console.log(`Wrong contract address. Expected ${expectedContractAddress}, got ${contractAddress}.`)
-    // }
-
     if (!process.env.WALLET_PRIVATE_KEY) {
         throw new Error("process.env.WALLET_PRIVATE_KEY not found.")
     }
@@ -34,9 +28,9 @@ export async function GET(request: Request) {
     console.log(`api/smart-contract/checkDrawWinners called with network = ${network}, contractAddress = ${contractAddress}, and cid = ${cid}`);
 
     let winners: number[] = [];
-    const cachedWinners: number[] | null = await kv.get(`winners_${cid}`);
+    const cachedWinners: number[] = []; // await redis.smembers(`winners_${cid}`);
 
-    if (Array.isArray(cachedWinners) && cachedWinners.length > 0) {
+    if (cachedWinners.length > 0) {
 
         // Retrieve randomness in cache if present
         winners = cachedWinners;
@@ -45,19 +39,11 @@ export async function GET(request: Request) {
     } else {
 
         // Else retrieve from smart contract
-
         const mainnet = network === 'arbitrum-mainnet';
-        console.log(`No cache in KV store. Retrieving winners from the smart contract.`)
-        // const providerBaseURL = (network === 'polygon-mainnet') ? process.env.MAINNET_API_URL : process.env.TESTNET_API_URL;
-        // const providerKey = (network === 'polygon-mainnet') ? process.env.MAINNET_API_KEY : process.env.TESTNET_API_KEY;
         const providerURL = ((mainnet && !testMode) ? process.env.NEXT_PUBLIC_MAINNET_RPC : process.env.NEXT_PUBLIC_TESTNET_RPC) as string;
 
         const jsonRpcProvider = new ethers.JsonRpcProvider(providerURL)
         const wallet = new ethers.Wallet(process.env.WALLET_PRIVATE_KEY, jsonRpcProvider);
-
-        // const contractArtifactFilePath = path.join(process.cwd(), `src/assets/${process.env.CONTRACT_NAME}.json`);
-        // const contractArtifact = await fsPromises.readFile(contractArtifactFilePath);
-        // const contractAbi = JSON.parse(contractArtifact.toString()).abi;
 
         const contract = new ethers.Contract(
             contractAddress,
@@ -75,10 +61,10 @@ export async function GET(request: Request) {
         
 
         // If winners have been generated, cache it
-        if (Array.isArray(winners) && winners.length > 0) {
-            await kv.set(`winners_${cid}`, winners);
-            console.log(`Added ${cid} : ${winners} in the KV store.`)
-        }
+        // if (Array.isArray(winners) && winners.length > 0) {
+        //     await redis.sadd(`winners_${cid}`, winners);
+        //     console.log(`Added ${cid} : ${winners} in the KV store.`)
+        // }
         
     }
 

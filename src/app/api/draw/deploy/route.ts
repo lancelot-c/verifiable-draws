@@ -1,10 +1,8 @@
-import { kv } from "@vercel/kv";
+import { Redis } from '@upstash/redis'
 import fs from 'fs';
 const fsPromises = fs.promises;
 import path from 'path'
-import axios from 'axios'
 import { Wallet, ethers } from 'ethers';
-import crypto from 'crypto'
 import { buildNextResponseJson } from './../../../../utils/errorHandling';
 import { unixfs } from "@helia/unixfs"
 import { BlackHoleBlockstore } from "blockstore-core/black-hole"
@@ -13,11 +11,7 @@ import { balanced } from "ipfs-unixfs-importer/layout"
 import { numberWithCommas } from './../../../../utils/misc'
 const pinataSDK = require('@pinata/sdk');
 import contractAbi from '../../../../assets/abi'
-// const filePath = path.join(process.cwd(), `src/assets/${process.env.CONTRACT_NAME}.json`);
 const testMode = (process.env.NEXT_PUBLIC_APP_ENV != "prod");
-// let gasStationURL: string;
-// let providerBaseURL: string;
-// let providerKey: string;
 let providerURL: string;
 let contractAddress: string;
 let etherscanAddress: string;
@@ -25,13 +19,13 @@ let provider: ethers.JsonRpcProvider;
 let wallet: Wallet;
 let network: string;
 
-// let maxFeePerGas = BigInt("400000000") // fallback to 400 gwei
-// let maxPriorityFeePerGas = BigInt("4000000000000") // fallback to 400 gwei
+const redis = new Redis({
+    url: process.env.REDIS_URL as string,
+    token: process.env.REDIS_TOKEN as string
+});
+
 
 async function setEthersParams(mainnet: boolean) {
-    // gasStationURL = ((network === 'mainnet') ? process.env.MAINNET_GAS_STATION_URL : process.env.TESTNET_GAS_STATION_URL) as string;
-    // providerBaseURL = ((network === 'mainnet') ? process.env.MAINNET_API_URL : process.env.TESTNET_API_URL) as string;
-    // providerKey = ((network === 'mainnet') ? process.env.MAINNET_API_KEY : process.env.TESTNET_API_KEY) as string;
     network = (mainnet && !testMode) ? "arbitrum-mainnet" : "arbitrum-sepolia";
     contractAddress = ((mainnet && !testMode) ? process.env.NEXT_PUBLIC_MAINNET_CONTRACT_ADDRESS : process.env.NEXT_PUBLIC_TESTNET_CONTRACT_ADDRESS) as string;
     etherscanAddress = (mainnet && !testMode) ? "https://arbiscan.io" : "https://sepolia.arbiscan.io";
@@ -68,37 +62,6 @@ export async function POST(request: Request) {
 
     })
 }
-
-// async function kvRetryGet(paymentIntentId: string, delay = 3000, retries = 3): Promise<0> {
-//     return new Promise(async (resolve) => {
-
-//         console.log(`KV retry get() for ${paymentIntentId} - delay:${delay} - retries:${retries}`);
-
-//         if (retries === 0) {
-//             throw new Error(`wrong use of kvRetryGet, retries should be > 0`)
-//         }
-
-//         setTimeout(async () => {
-//             const orderStatus = await kv.get(paymentIntentId);
-
-//             if (orderStatus === undefined || orderStatus === null) {
-//                 if (--retries > 0) {
-//                     await kvRetryGet(paymentIntentId, delay * 2, retries);
-//                 } else {
-//                     throw new Error(`No value in KV store for ${paymentIntentId} after ${retries + 1} get() attempts`)
-//                 }
-//             } else if (orderStatus === 1) {
-//                 throw new Error(`Order ${paymentIntentId} was already delivered`)
-//             } else if (orderStatus !== 0) {
-//                 throw new Error(`Unknown status for order ${paymentIntentId} : ${orderStatus}`)
-//             }
-
-//             return resolve(0);
-
-//         }, delay);
-
-//     });
-// }
 
 async function createDraw(
     owner: string,
@@ -289,7 +252,7 @@ async function calculateCidFromString(str: string) {
 }
 
 async function pinInKV(cid: string, content: string) {
-    await kv.set(`content_${cid}`, content);
+    await redis.sadd(`content_${cid}`, content);
 }
 
 async function publishOnSmartContract(owner: string, cid: string, scheduledAt: number, nbParticipants: number, nbWinners: number) {
