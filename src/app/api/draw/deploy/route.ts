@@ -9,7 +9,8 @@ import { BlackHoleBlockstore } from "blockstore-core/black-hole"
 import { fixedSize } from "ipfs-unixfs-importer/chunker"
 import { balanced } from "ipfs-unixfs-importer/layout"
 import { numberWithCommas } from './../../../../utils/misc'
-const pinataSDK = require('@pinata/sdk');
+// const pinataSDK = require('@pinata/sdk');
+import { FleekSdk, PersonalAccessTokenService } from '@fleekxyz/sdk';
 import contractAbi from '../../../../assets/abi'
 const testMode = (process.env.NEXT_PUBLIC_APP_ENV != "prod");
 let providerURL: string;
@@ -170,24 +171,44 @@ async function pinFileToIPFS(filepath: string): Promise<string> {
 
     let cid;
 
+    // *** Using Fleek.xyz ***
+    const newAccessTokenService = new PersonalAccessTokenService({
+        personalAccessToken: process.env.FLEEK_ACCESS_TOKEN as string,
+        projectId: process.env.FLEEK_PROJECT_ID as string,
+    })
+    
+    const fleekSdk = new FleekSdk({ accessTokenService: newAccessTokenService });
+
+    const fileToUploads = [];
+    const buffer = fs.readFileSync(filepath);
+    fileToUploads.push({ path: `verifiable-draw.html`, content: buffer });
+
+    const options = {
+        wrapWithDirectory: true
+    };
+    
+    const result = await fleekSdk.ipfs().addAll(fileToUploads, options);
+    cid = result[1].cid.toV1().toString();
+
+
     // *** Using Pinata ***
     // ⚠️ As of February 2024 you have to pay 20€/month to upload .html files on Pinata, it isn't allowed on their free plan
 
-    const pinata = new pinataSDK({ pinataJWTKey: process.env.PINATA_API_JWT});
+    // const pinata = new pinataSDK({ pinataJWTKey: process.env.PINATA_API_JWT});
 
-    const readableStreamForFile = fs.createReadStream(filepath);
-    const options = {
-        pinataMetadata: {
-            name: 'verifiable-draw.html',
-        },
-        pinataOptions: {
-            cidVersion: 1,
-            wrapWithDirectory: true
-        }
-    };
-    const res = await pinata.pinFileToIPFS(readableStreamForFile, options)
-    console.log(`Pinata response:`, res)
-    cid = res.IpfsHash
+    // const readableStreamForFile = fs.createReadStream(filepath);
+    // const options = {
+    //     pinataMetadata: {
+    //         name: 'verifiable-draw.html',
+    //     },
+    //     pinataOptions: {
+    //         cidVersion: 1,
+    //         wrapWithDirectory: true
+    //     }
+    // };
+    // const res = await pinata.pinFileToIPFS(readableStreamForFile, options)
+    // console.log(`Pinata response:`, res)
+    // cid = res.IpfsHash
 
     // *** Using ipfs-only-hash ***
     // cid = await Hash.of('data')

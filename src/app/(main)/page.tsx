@@ -136,7 +136,7 @@ const featuresCool = [
     {
         name: 'Decentralized frontend.',
         description:
-            'The draw details are gathered in a single html file which is stored on our private IPFS gateway at verify.win/<IPFS-CID>. When the draw occurs, the webpage automatically retrieve the winners from the smart contract and display them to the user.',
+            'The draw details are gathered in a single html file which is stored on our private IPFS gateway at verify.win/<ipfs-cid>. When the draw occurs, the webpage automatically retrieve the winners from the smart contract and display them to the user.',
         icon: ShieldCheckIcon,
     },
     {
