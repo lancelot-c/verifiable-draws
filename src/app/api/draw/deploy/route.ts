@@ -9,7 +9,6 @@ import { BlackHoleBlockstore } from "blockstore-core/black-hole"
 import { fixedSize } from "ipfs-unixfs-importer/chunker"
 import { balanced } from "ipfs-unixfs-importer/layout"
 import { numberWithCommas } from './../../../../utils/misc'
-// const pinataSDK = require('@pinata/sdk');
 import { FleekSdk, PersonalAccessTokenService } from '@fleekxyz/sdk';
 import contractAbi from '../../../../assets/abi'
 const testMode = (process.env.NEXT_PUBLIC_APP_ENV != "prod");
