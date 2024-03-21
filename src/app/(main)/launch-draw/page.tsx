@@ -657,13 +657,13 @@ export default function Page() {
                                             </div>
                                             <div className="ml-3">
                                                 <h3 className="text-sm font-medium text-yellow-800">
-                                                    Deploying the draw on IPFS and Ethereum.
+                                                    Deploying the random draw onchain, please wait without closing the page.
                                                 </h3>
-                                                <div className="mt-2 text-sm text-yellow-700">
+                                                {/* <div className="mt-2 text-sm text-yellow-700">
                                                     <p>
-                                                        This action generally takes about a minute, please wait without closing the page.
+                                                        Please wait without closing the page.
                                                     </p>
-                                                </div>
+                                                </div> */}
                                             </div>
                                         </div>
                                     </div>
@@ -716,8 +716,8 @@ export default function Page() {
                                 (drawLinks.length > 0 && !deployError) && (
                                     <div className="text-center">
                                         <p className="mt-8 text-md">
-                                            Your draw has successfully been deployed on IPFS & Ethereum. 🎉<br />
-                                            You can now share the following IPFS link with the participants so that they can access the draw results in a trustless way.
+                                            Your draw has successfully been deployed. 🎉<br />
+                                            You can now share the following link with the participants so that they can access the draw results in a trustless way.
                                         </p>
 
 
