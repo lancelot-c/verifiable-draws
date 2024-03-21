@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     console.log(`Access draw ${cid}`);
 
     // const pinataUrl = `https://${process.env.PINATA_GATEWAY_DOMAIN}/ipfs/${cid}/verifiable-draw.html`
-    const ipfsUrl = `https://ipfs.io/ipfs/${cid}/verifiable-draw.html`;
+    const ipfsUrl = `https://random.win/ipfs/${cid}/verifiable-draw.html`;
     let fileData: string | null = null;
 
     // Try fetching from IPFS first
