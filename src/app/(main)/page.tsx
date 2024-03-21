@@ -35,7 +35,8 @@ import {
     CursorArrowRaysIcon,
     UserGroupIcon,
     ArrowTopRightOnSquareIcon,
-    GlobeEuropeAfricaIcon
+    GlobeEuropeAfricaIcon,
+    XMarkIcon
 } from '@heroicons/react/24/solid'
 
 
@@ -230,7 +231,10 @@ const tiers = [
             { included: true, text: `Up to ${numberWithCommas(process.env.NEXT_PUBLIC_TESTNET_MAX_PARTICIPANTS as unknown as number)} participants` },
             { included: true, text: `Up to ${numberWithCommas(process.env.NEXT_PUBLIC_TESTNET_MAX_WINNERS as unknown as number)} winners` },
             { included: true, text: 'Deploy on Arbitrum Sepolia testnet' },
-            { included: true, text: 'Access on our IPFS gateway verify.win' },
+            // { included: false, text: 'Randomness not secured by mainnet' },
+            { included: true, text: 'Access on our private gateway verify.win' },
+            { included: false, text: 'Not available on IPFS' },
+            { included: true, text: 'Support on our Discord' },
         ],
         mostPopular: false,
         cta: 'Launch draw',
@@ -242,11 +246,12 @@ const tiers = [
         price: `$${ process.env.NEXT_PUBLIC_DRAW_USD_PRICE }`,
         description: 'Deploy on the open web: trustless, censorship resistant, tamper-proof and verifiable.',
         features: [
+            { included: true, text: 'Pay in crypto' },
             { included: true, text: `Up to ${numberWithCommas(process.env.NEXT_PUBLIC_MAINNET_MAX_PARTICIPANTS as unknown as number)} participants` },
             { included: true, text: `Up to ${numberWithCommas(process.env.NEXT_PUBLIC_MAINNET_MAX_WINNERS as unknown as number)} winners` },
             { included: true, text: 'Deploy on Arbitrum One mainnet' },
-            { included: true, text: 'Access on our IPFS gateway verify.win' },
-            { included: true, text: 'Publish on the public IPFS network' },
+            { included: true, text: 'Access on our private gateway verify.win' },
+            { included: true, text: 'Publicly verifiable on IPFS' },
             { included: true, text: 'Support on our Discord' },
         ],
         mostPopular: true,
@@ -259,19 +264,20 @@ const tiers = [
         price: 'Custom',
         description: 'We provide custom plans for companies engaged in large-scale operations.',
         features: [
+            { included: true, text: 'Pay in fiat or crypto' },
             // { included: true, text: 'Unlimited draws' },
             { included: true, text: 'Unlimited participants' },
             { included: true, text: 'Unlimited winners' },
             { included: true, text: 'Deploy on Arbitrum One mainnet' },
-            { included: true, text: 'Access on our IPFS gateway verify.win' },
-            { included: true, text: 'Publish on the public IPFS network' },
-            { included: true, text: 'Dedicated gateway for enhanced privacy' },
+            { included: true, text: 'Access on our private gateway verify.win' },
+            { included: true, text: 'Publicly verifiable on IPFS' },
+            // { included: true, text: 'Dedicated gateway for enhanced privacy' },
             { included: true, text: 'White-labelling, bring your own template' },
             { included: true, text: 'API access' },
             { included: true, text: '24/7 priority support' },
         ],
         mostPopular: false,
-        cta: 'Contact sales',
+        cta: 'Contact us',
     }
 ]
 
@@ -968,7 +974,7 @@ export default function Example() {
                 'flex flex-col justify-between rounded-3xl bg-white p-8 xl:p-10'
               )}
             >
-              <div>
+              <div className={tier.mostPopular ? 'mt-8' : ''}>
                 <div className="flex items-center justify-between gap-x-4">
                   <h3
                     id={tier.id}
@@ -998,9 +1004,10 @@ export default function Example() {
                         {feature.included ? (
                             <CheckIcon className="h-6 w-5 flex-none text-indigo-600" aria-hidden="true" />
                         ) : (
-                            <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M4 10a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H4.75A.75.75 0 014 10z" clip-rule="evenodd"></path>
-                            </svg>
+                            <XMarkIcon className="h-6 w-5 flex-none text-gray-400" aria-hidden="true" />
+                            // <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            //     <path fill-rule="evenodd" d="M4 10a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H4.75A.75.75 0 014 10z" clip-rule="evenodd"></path>
+                            // </svg>
                         )}
 
                         {feature.text}
