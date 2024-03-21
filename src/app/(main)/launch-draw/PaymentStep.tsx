@@ -18,10 +18,10 @@ const contractAddress = (process.env.NEXT_PUBLIC_APP_ENV == "prod") ? process.en
 
 
 const features = [
-    { included: true, text: 'Deploy on Arbitrum One mainnet' },
-    { included: true, text: 'Publish on the public IPFS network' },
-    { included: true, text: 'Automatic trigger at the scheduled date' },
-    { included: true, text: 'Onchain randomness generation' },
+    { included: true, text: 'Publicly verifiable frontend on IPFS' },
+    { included: true, text: 'Publicly verifiable backend on Arbitrum mainnet' },
+    { included: true, text: 'Publicly verifiable onchain randomness' },
+    // { included: true, text: 'Automatic trigger at the scheduled date' },
 ];
 
 
