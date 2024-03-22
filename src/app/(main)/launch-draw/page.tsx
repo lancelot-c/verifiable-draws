@@ -8,10 +8,6 @@ import PaymentStep from './PaymentStep'
 import { numberWithCommas, classNames } from './../../../utils/misc'
 
 
-
-
-
-
 const basePaths = (process.env.NEXT_PUBLIC_APP_ENV === 'test' && !process.env.NEXT_PUBLIC_VERCEL_URL) ? ['http://localhost:3000/ipfs?cid='] : ['http://verify.win/']
 
 
@@ -223,7 +219,7 @@ export default function Page() {
             });
     }
 
-    async function deploy(mainnet: boolean, owner?: string) {
+    async function deploy(mainnet: boolean, owner?: string, signature?: string) {
         await nextStep(`step${shareStep}`);
 
         const [drawTitle, drawRules, drawParticipants, drawNbWinners] = getValues(["step1.name", "step1.rules", "step1.participants", "step1.nbWinners"]);
@@ -232,6 +228,7 @@ export default function Page() {
 
         let jsonBody = {
             owner,
+            signature,
             drawTitle,
             drawRules,
             drawParticipants,

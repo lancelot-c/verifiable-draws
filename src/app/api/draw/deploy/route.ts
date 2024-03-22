@@ -18,28 +18,13 @@ let etherscanAddress: string;
 let provider: ethers.JsonRpcProvider;
 let wallet: Wallet;
 let network: string;
+let contract: ethers.Contract;
+let price: bigint;
 
 const redis = new Redis({
     url: process.env.REDIS_URL as string,
     token: process.env.REDIS_TOKEN as string
 });
-
-
-async function setEthersParams(mainnet: boolean) {
-    network = (mainnet && !testMode) ? "arbitrum-mainnet" : "arbitrum-sepolia";
-    contractAddress = ((mainnet && !testMode) ? process.env.NEXT_PUBLIC_MAINNET_CONTRACT_ADDRESS : process.env.NEXT_PUBLIC_TESTNET_CONTRACT_ADDRESS) as string;
-    etherscanAddress = (mainnet && !testMode) ? "https://arbiscan.io" : "https://sepolia.arbiscan.io";
-    providerURL = ((mainnet && !testMode) ? process.env.NEXT_PUBLIC_MAINNET_RPC : process.env.NEXT_PUBLIC_TESTNET_RPC) as string;
-    provider = new ethers.JsonRpcProvider(providerURL)
-    
-    if (!process.env.WALLET_PRIVATE_KEY) {
-        throw new Error("process.env.WALLET_PRIVATE_KEY is not defined")
-    }
-    wallet = new ethers.Wallet(process.env.WALLET_PRIVATE_KEY, provider);
-}
-
-
-
 
 
 export async function POST(request: Request) {
@@ -57,14 +42,16 @@ export async function POST(request: Request) {
         const drawScheduledAt: number = body.drawScheduledAt;
         const mainnet: boolean = body.mainnet;
         const owner: string = (mainnet) ? body.owner : process.env.WALLET_PUBLIC_KEY; // We take ownership of the draw on testnet
+        const signature: string = body.signature;
 
-        response.cid = await createDraw(owner, drawTitle, drawRules, drawParticipants, drawNbWinners, drawScheduledAt, mainnet);
+        response.cid = await createDraw(owner, signature, drawTitle, drawRules, drawParticipants, drawNbWinners, drawScheduledAt, mainnet);
 
     })
 }
 
 async function createDraw(
     owner: string,
+    signature: string,
     drawTitle: string,
     drawRules: string,
     drawParticipants: string,
@@ -91,7 +78,15 @@ async function createDraw(
         throw new Error(`Your draw has ${drawNbWinners} winners whereas the maximum allowed is ${maxWinnersAllowed} on ${mainnet ? 'mainnet' : 'testnet'}.`);
     }
 
+    // Check if signature is valid, only needed for mainnet because we are the owner for testnet
+    if (mainnet) {
+        await validateSignature(owner, signature);
+    }
+
     await setEthersParams(mainnet)
+
+    // Check if balance is valid
+    await validateBalance(owner);
 
     // Generate draw file
     let [generatedCid, content] = await generateDrawFile(drawTitle, drawRules, drawParticipantsArray, drawNbParticipants, drawNbWinners, drawScheduledAt);
@@ -113,12 +108,101 @@ async function createDraw(
         await pinInKV(generatedCid, content);
     }
 
+    // Check if CID does not already exist
+    // TODO: ideally, precompute the CID, then call validateCid, and only then call pinFileToIPFS to avoid storing duplicate files on IPFS
+    await validateCid(generatedCid);
+
     // Publish draw on smart contract
     await publishOnSmartContract(owner, generatedCid, drawScheduledAt, drawNbParticipants, drawNbWinners);
 
     return generatedCid
 
 }
+
+async function setEthersParams(mainnet: boolean) {
+    network = (mainnet && !testMode) ? "arbitrum-mainnet" : "arbitrum-sepolia";
+    contractAddress = ((mainnet && !testMode) ? process.env.NEXT_PUBLIC_MAINNET_CONTRACT_ADDRESS : process.env.NEXT_PUBLIC_TESTNET_CONTRACT_ADDRESS) as string;
+    etherscanAddress = (mainnet && !testMode) ? "https://arbiscan.io" : "https://sepolia.arbiscan.io";
+    providerURL = ((mainnet && !testMode) ? process.env.NEXT_PUBLIC_MAINNET_RPC : process.env.NEXT_PUBLIC_TESTNET_RPC) as string;
+    provider = new ethers.JsonRpcProvider(providerURL)
+    
+    if (!process.env.WALLET_PRIVATE_KEY) {
+        throw new Error("process.env.WALLET_PRIVATE_KEY is not defined")
+    }
+    wallet = new ethers.Wallet(process.env.WALLET_PRIVATE_KEY, provider);
+
+    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : 'http://localhost:3000'
+    const ethPrice = await fetch(`${baseUrl}/api/payment/eth-usd-price`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+    })
+        .then(res => res.json())
+        .then(data => data.ethereum.usd);
+
+    const ethAmount = Number(process.env.NEXT_PUBLIC_DRAW_USD_PRICE) / ethPrice;
+    price = ethers.parseEther(ethAmount.toFixed(18).toString());
+
+    contract = new ethers.Contract(
+        contractAddress,
+        contractAbi,
+        provider
+    );
+}
+
+
+async function validateSignature(owner: string, signature: string) {
+
+    const message = `Verifiable Draws wants you to sign in with your Ethereum account ${owner}.
+
+Signing is the only way we can truly know that you are the owner of the wallet you are connecting. Signing is a safe, gas-less transaction that does not in any way give Verifiable Draws permission to perform any transactions with your wallet.`;
+
+    try {
+        const signerAddress = await ethers.verifyMessage(message, signature);
+
+        if (signerAddress !== owner) {
+            throw new Error(`Invalid signature for ${owner}`);
+        }
+
+    } catch (err: any) {
+        console.log(err);
+        throw new Error(err);
+    }
+}
+
+
+async function validateBalance(address: string) {
+
+    // Check user balance
+    try {
+
+        if (address != process.env.WALLET_PUBLIC_KEY) {
+            const balance: number = await contract.userBalances(address);
+
+            if (balance < price) {
+                throw new Error(`Not enough funds for ${address}, need ${price} wei, got ${balance} wei, please call the topUp function from the contract to top up your account, then try again.`);
+            }
+        }
+        
+    } catch {
+        throw new Error("Couldn't call userBalances from contract");
+    }
+}
+
+
+async function validateCid(cid: string) {
+
+    // Check if draw already exist
+    try {
+        const draw: any = await contract.draws(cid);
+
+        if (draw.publishedAt != 0) {
+            throw new Error(`Draw with CID ${cid} already exists.`);
+        }
+    } catch {
+        throw new Error("Couldn't call draws from contract");
+    }
+}
+
 
 function deleteFile(filepath: string) {
     fs.unlink(filepath, (err) => {
@@ -277,29 +361,13 @@ async function pinInKV(cid: string, content: string) {
 
 async function publishOnSmartContract(owner: string, cid: string, scheduledAt: number, nbParticipants: number, nbWinners: number) {
 
-    // const jsonData = await fsPromises.readFile(filePath);
-    // const abi = JSON.parse(jsonData.toString()).abi;
+    console.log(`deployDraw ${cid} with price ${price} on smart contract ${contractAddress}\n`);
 
-    const contract = new ethers.Contract(
+    contract = new ethers.Contract(
         contractAddress,
         contractAbi,
         wallet
     );
-
-    // await setOptimalGas();
-
-    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL ? process.env.NEXT_PUBLIC_VERCEL_URL : 'http://localhost:3000'
-    const ethPrice = await fetch(`${baseUrl}/api/payment/eth-usd-price`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-    })
-        .then(res => res.json())
-        .then(data => data.ethereum.usd);
-
-    const ethAmount = Number(process.env.NEXT_PUBLIC_DRAW_USD_PRICE) / ethPrice;
-    const price = ethers.parseEther(ethAmount.toFixed(18).toString());
-
-    console.log(`deployDraw ${cid} with price ${price} on smart contract ${contractAddress}\n`);
 
     try {
         await contract.deployDraw(owner, cid, scheduledAt, nbParticipants, nbWinners, price
