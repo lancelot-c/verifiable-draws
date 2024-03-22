@@ -346,7 +346,7 @@ export default function Page() {
 
 
             <h2 className="mt-0 text-4xl font-bold tracking-tight mb-16 text-gray-900 sm:text-5xl text-center">
-                End-to-end verifiable random draw
+                Launch a verifiable draw
             </h2>
 
             <nav aria-label="Progress">
