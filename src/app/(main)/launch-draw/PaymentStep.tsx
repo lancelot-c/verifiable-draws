@@ -132,9 +132,8 @@ export default function PaymentStep(
         if (signer && account) {
             
             let signature: string;
-            const message = `Verifiable Draws wants you to sign in with your Ethereum account ${account.address}.
+            const message = `Verifiable Draws wants you to sign in with your Ethereum account ${account.address}.\n\nSigning is the only way we can truly know that you are the owner of the wallet you are connecting. Signing is a safe, gas-less transaction that does not in any way give Verifiable Draws permission to perform any transactions with your wallet.`;
 
-Signing is the only way we can truly know that you are the owner of the wallet you are connecting. Signing is a safe, gas-less transaction that does not in any way give Verifiable Draws permission to perform any transactions with your wallet.`;
 
             try {
                 signature = await signer.signMessage(message);

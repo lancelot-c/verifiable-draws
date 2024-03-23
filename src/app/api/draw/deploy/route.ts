@@ -80,7 +80,7 @@ async function createDraw(
 
     // Check if signature is valid, only needed for mainnet because we are the owner for testnet
     if (mainnet) {
-        await validateSignature(owner, signature);
+        owner = await validateSignature(owner, signature);
     }
 
     await setEthersParams(mainnet)
@@ -150,18 +150,20 @@ async function setEthersParams(mainnet: boolean) {
 }
 
 
-async function validateSignature(owner: string, signature: string) {
+async function validateSignature(address: string, signature: string): Promise<string> {
 
-    const message = `Verifiable Draws wants you to sign in with your Ethereum account ${owner}.
+    const message = `Verifiable Draws wants you to sign in with your Ethereum account ${address}.\n\nSigning is the only way we can truly know that you are the owner of the wallet you are connecting. Signing is a safe, gas-less transaction that does not in any way give Verifiable Draws permission to perform any transactions with your wallet.`;
 
-Signing is the only way we can truly know that you are the owner of the wallet you are connecting. Signing is a safe, gas-less transaction that does not in any way give Verifiable Draws permission to perform any transactions with your wallet.`;
 
     try {
         const signerAddress = await ethers.verifyMessage(message, signature);
 
-        if (signerAddress !== owner) {
-            throw new Error(`Invalid signature for ${owner}`);
+        // Convert both to lower case because signerAddress is always case sensitive whereas address is potentially case insensitive
+        if (signerAddress.toLowerCase() !== address.toLowerCase()) {
+            throw new Error(`Invalid signature ${signature}, match address ${signerAddress} instead of ${address}.`);
         }
+
+        return signerAddress; // Return the case sensitive address to update the current one
 
     } catch (err: any) {
         console.log(err);
