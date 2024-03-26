@@ -11,6 +11,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 import {
     Bars3Icon,
+    ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/solid'
 
 export const metadata = {
@@ -116,7 +117,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <div className="bg-white">
 
         {/* Header */}
-<header className="absolute inset-x-0 top-0 z-50 w-1/2"> {/* TODO: w-1/2 enables the user to click on the AccountCenter in /launch-draw, fix with a proper solution */}
+<header className="absolute inset-x-0 top-0 z-50">
         <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
         <Link href="/" className="-m-1.5 p-1.5">
                         <div className="flex lg:flex-1 items-center">
@@ -130,7 +131,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                             </div>
                         </div>
                     </Link>
-          <div className="flex hidden">
+
+        <div className="flex">
+
+
+            
+            <Link href="https://docs.verifiabledraws.com/" className="flex text-sm font-semibold leading-6 text-gray-900 mr-10" rel="noopener" target="_blank">
+                <span>Documentation</span>
+                <ArrowTopRightOnSquareIcon className="h-6 w-5 flex-none text-gray-900 ml-2" aria-hidden="true" />
+            </Link>
+
+            <Link href={footerNavigation.social[0].href} className="flex text-sm font-semibold leading-6 text-gray-900" rel="noopener" target="_blank">
+                <span>{footerNavigation.social[0].name}</span>
+                <ArrowTopRightOnSquareIcon className="h-6 w-5 flex-none text-gray-900 ml-2" aria-hidden="true" />
+            </Link>
+        </div>
+
+
+          {/* <div className="flex hidden">
             <button
               type="button"
               className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
@@ -148,10 +166,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             ))}
           </div>
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-                        {/* <a href="#join-community" className="text-sm font-semibold leading-6 text-gray-900">
+                        <a href="#join-community" className="text-sm font-semibold leading-6 text-gray-900">
                             Log in <span aria-hidden="true">&rarr;</span>
-                        </a> */}
-                    </div>
+                        </a>
+                    </div> */}
         </nav>
         {/* <Dialog as="div" className="lg:hidden" open={mobileMenuOpen} onClose={setMobileMenuOpen}>
           <div className="fixed inset-0 z-50" />

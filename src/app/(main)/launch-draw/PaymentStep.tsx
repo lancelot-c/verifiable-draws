@@ -90,14 +90,14 @@ const web3Onboard = init({
     appMetadata,
     accountCenter: {
         desktop: {
-            enabled: true,
-            position: 'topRight',
-            minimal: false
+            enabled: false,
+            // position: 'topRight',
+            // minimal: false
         },
         mobile: {
-            enabled: true,
-            position: 'bottomLeft',
-            minimal: true
+            enabled: false,
+            // position: 'bottomLeft',
+            // minimal: true
         }
     }
 })
@@ -116,14 +116,14 @@ export default function PaymentStep(
     const [signature, setSignature] = useState<string>("");
 
 
-    // function shorten(account: string) {
+    function shorten(account: string) {
 
-    //     if (account.length > 20) {
-    //         return account.substring(0, 6) + '...' + account.substring(account.length-4, account.length);
-    //     }
+        if (account.length > 20) {
+            return account.substring(0, 6) + '...' + account.substring(account.length-4, account.length);
+        }
 
-    //     return account;
-    // }
+        return account;
+    }
 
     async function signTransaction() {
 
@@ -292,7 +292,6 @@ export default function PaymentStep(
             <div className="flex flex-col">
                 {
                     (wallet?.provider && account) ? (
-                        
 
                         (!signature) ? (
                             <button
@@ -309,8 +308,6 @@ export default function PaymentStep(
                                 Confirm deploy
                             </button>
                         )
-                            
-                        
                     ) : (
                         <button
                             onClick={() => { connect() }}
@@ -322,13 +319,28 @@ export default function PaymentStep(
                     )
                 }
 
-                <button
-                    type="button"
-                    onClick={() => { deploy(false) }}
-                    className="px-3 py-2 text-sm font-semibold text-gray-700"
-                >
-                    Deploy on testnet for free instead <span aria-hidden="true">→</span>
-                </button>
+
+                {
+                    (wallet?.provider && account) ? (
+                        <button
+                            type="button"
+                            onClick={() => { disconnect({ label: wallet.label }) }}
+                            className="px-3 py-2 text-sm font-medium text-gray-700"
+                        >
+                            Disconnect { shorten(account.ens?.name ? account.ens.name : account.address) }
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => { deploy(false) }}
+                            className="px-3 py-2 text-sm font-semibold text-gray-700"
+                        >
+                            Deploy on testnet for free instead <span aria-hidden="true">→</span>
+                        </button>
+                    )
+                }
+
+
             </div>
 
         </div>
