@@ -140,7 +140,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 href="https://docs.verifiabledraws.com/"
                 rel="noopener"
                 target="_blank"
-                className="flex text-sm font-semibold leading-6 text-gray-900 mr-10"
+                className="flex text-sm font-semibold leading-6 text-gray-900"
             >
                 <span>Documentation</span>
                 <ArrowTopRightOnSquareIcon className="h-6 w-5 flex-none text-gray-900 ml-2" aria-hidden="true" />
