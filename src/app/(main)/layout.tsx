@@ -136,15 +136,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 
             
-            <Link href="https://docs.verifiabledraws.com/" className="flex text-sm font-semibold leading-6 text-gray-900 mr-10" rel="noopener" target="_blank">
+            <Link 
+                href="https://docs.verifiabledraws.com/"
+                rel="noopener"
+                target="_blank"
+                className="flex text-sm font-semibold leading-6 text-gray-900 mr-10"
+            >
                 <span>Documentation</span>
                 <ArrowTopRightOnSquareIcon className="h-6 w-5 flex-none text-gray-900 ml-2" aria-hidden="true" />
             </Link>
 
-            <Link href={footerNavigation.social[0].href} className="flex text-sm font-semibold leading-6 text-gray-900" rel="noopener" target="_blank">
+            {/* <Link href={footerNavigation.social[0].href} className="flex text-sm font-semibold leading-6 text-gray-900" rel="noopener" target="_blank">
                 <span>{footerNavigation.social[0].name}</span>
                 <ArrowTopRightOnSquareIcon className="h-6 w-5 flex-none text-gray-900 ml-2" aria-hidden="true" />
-            </Link>
+            </Link> */}
         </div>
 
 
